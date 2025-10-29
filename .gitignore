@@ -49,3 +49,6 @@ check_password.js
 
 # TODO files
 TODO*.md
+
+# Git files
+.git/
