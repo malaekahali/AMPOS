@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة المدير - AM POS</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="icon" href="favicon.png" type="image/png">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h2 class="app-name">AM POS</h2>
+            </div>
+            <div class="title-section">
+                <h1>لوحة المدير</h1>
+            </div>
+            <div class="user-info">
+                <span id="userName"></span>
+                <button id="themeToggleBtn" class="theme-toggle-btn btn" title="تبديل الوضع">🌙</button>
+                <button id="logoutBtn" class="logout-btn btn">تسجيل الخروج</button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="products">إدارة المنتجات</button>
+        <button class="tab-btn" data-tab="employees">إدارة الموظفين</button>
+        <button id="dailySalesBtn" class="daily-sales-btn btn" title="المبيعات اليومية">📊 المبيعات اليومية</button>
+    </nav>
+
+    <main class="main-content">
+        <!-- تبويب المنتجات -->
+        <div id="productsTab" class="tab-content active">
+            <div class="section-header">
+                <h2>إدارة المنتجات</h2>
+                <button id="addProductBtn" class="add-btn">إضافة منتج جديد</button>
+            </div>
+
+            <div class="products-container">
+                <div class="products-accordion">
+                    <button class="accordion-btn" id="productsAccordionBtn">
+                        <span>المنتجات</span>
+                        <span class="accordion-icon">▼</span>
+                    </button>
+                    <div class="accordion-content" id="productsAccordionContent">
+                        <div class="products-grid" id="productsGrid">
+                            <!-- سيتم إضافة المنتجات هنا ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- تبويب الموظفين -->
+        <div id="employeesTab" class="tab-content">
+            <div class="section-header">
+                <h2>إدارة الموظفين</h2>
+                <button id="addEmployeeBtn" class="add-btn">إضافة موظف جديد</button>
+            </div>
+
+            <div class="employees-container">
+                <div class="employees-accordion">
+                    <button class="accordion-btn" id="employeesAccordionBtn">
+                        <span>الموظفين</span>
+                        <span class="accordion-icon">▼</span>
+                    </button>
+                    <div class="accordion-content" id="employeesAccordionContent">
+                        <div class="employees-list" id="employeesList">
+                            <!-- سيتم إضافة الموظفين هنا ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- مودال إضافة/تعديل المنتج -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">إضافة منتج جديد</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="productForm">
+                <div class="form-group">
+                    <label for="productName">اسم المنتج</label>
+                    <input type="text" id="productName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">السعر</label>
+                    <input type="number" id="productPrice" name="price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="productImage">رابط الصورة</label>
+                    <input type="url" id="productImage" name="image_url">
+                </div>
+                <div class="form-group">
+                    <label for="productCategory">التصنيف</label>
+                    <select id="productCategory" name="category" required>
+                        <option value="مشروبات ساخنة">مشروبات ساخنة</option>
+                        <option value="مشروبات باردة">مشروبات باردة</option>
+                        <option value="عصائر">عصائر</option>
+                        <option value="مشروبات الشوكولاتة">مشروبات الشوكولاتة</option>
+                        <option value="المخبوزات">المخبوزات</option>
+                        <option value="حلويات">حلويات</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn">إلغاء</button>
+                    <button type="submit" class="save-btn">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال إضافة/تعديل الموظف -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="employeeModalTitle">إضافة موظف جديد</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="employeeForm">
+                <div class="form-group">
+                    <label for="employeeName">اسم الموظف</label>
+                    <input type="text" id="employeeName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeNumber">رقم الموظف</label>
+                    <input type="text" id="employeeNumber" name="employee_number" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeePassword">كلمة المرور</label>
+                    <input type="password" id="employeePassword" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeRole">الدور</label>
+                    <select id="employeeRole" name="role" required>
+                        <option value="cashier">كاشير</option>
+                        <option value="admin">مدير</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn">إلغاء</button>
+                    <button type="submit" class="save-btn">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال التأكيد -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3>تأكيد الحذف</h3>
+                <span class="close">&times;</span>
+            </div>
+            <p>هل أنت متأكد من حذف هذا العنصر؟</p>
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn">إلغاء</button>
+                <button type="button" id="confirmDeleteBtn" class="delete-btn">حذف</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال المبيعات اليومية -->
+    <div id="dailySalesModal" class="modal">
+        <div class="modal-content daily-sales-modal">
+            <div class="modal-header">
+                <h3>المبيعات اليومية</h3>
+                <span class="close" id="closeDailySalesModal">&times;</span>
+            </div>
+            <div id="dailySalesContent">
+                <!-- سيتم تحميل محتوى المبيعات اليومية هنا -->
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نقطة البيع - AM POS</title>
+    <link rel="stylesheet" href="css/cashier.css">
+    <link rel="icon" href="favicon.png" type="image/png">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h2 class="app-name">AM POS</h2>
+            </div>
+            <div class="title-section">
+                <h1>نقطة البيع</h1>
+            </div>
+            <div class="user-info">
+                <span id="userName"></span>
+                <button id="themeToggleBtn" class="theme-toggle-btn btn" title="تبديل الوضع">🌙</button>
+                <button id="logoutBtn" class="logout-btn btn">تسجيل الخروج</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- قائمة المنتجات -->
+        <div class="products-section">
+            <div class="section-header">
+                <h2>المنتجات</h2>
+                <div class="category-filter">
+                    <button class="category-btn active" data-category="all">الكل</button>
+                    <button class="category-btn" data-category="مشروبات ساخنة">مشروبات ساخنة</button>
+                    <button class="category-btn" data-category="مشروبات باردة">مشروبات باردة</button>
+                    <button class="category-btn" data-category="عصائر">عصائر</button>
+                    <button class="category-btn" data-category="مشروبات الشوكولاتة">مشروبات الشوكولاتة</button>
+                    <button class="category-btn" data-category="المخبوزات">المخبوزات</button>
+                    <button class="category-btn" data-category="حلويات">حلويات</button>
+                </div>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+                <!-- سيتم إضافة المنتجات هنا ديناميكياً -->
+            </div>
+        </div>
+
+        <!-- سلة المشتريات -->
+        <div class="cart-section">
+            <div class="section-header">
+                <h2>سلة المشتريات</h2>
+                <button id="clearCartBtn" class="clear-btn">مسح الكل</button>
+            </div>
+
+            <div class="cart-items" id="cartItems">
+                <div class="empty-cart">
+                    <span>🛒</span>
+                    <p>السلة فارغة</p>
+                </div>
+            </div>
+
+            <div class="cart-total">
+                <div class="total-row">
+                    <span>المجموع:</span>
+                    <span id="totalAmount">0.00 ريال</span>
+                </div>
+            </div>
+
+            <div class="action-section">
+                <button id="checkoutBtn" class="checkout-btn" disabled>إتمام الشراء</button>
+                <button id="dailySalesBtn" class="daily-sales-btn btn" title="المبيعات اليومية">📊 المبيعات اليومية</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- مودال الدفع -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content payment-modal">
+            <div class="modal-header">
+                <h3>الدفع</h3>
+                <span class="close" id="closePaymentModal">&times;</span>
+            </div>
+            <div id="paymentContent">
+                <!-- سيتم تحميل محتوى الدفع هنا -->
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال الإيصال -->
+    <div id="receiptModal" class="modal">
+        <div class="modal-content receipt">
+            <div class="modal-header">
+                <h3>الإيصال</h3>
+                <span class="close">&times;</span>
+            </div>
+
+            <div class="receipt-content" id="receiptContent">
+                <!-- سيتم إضافة محتوى الإيصال هنا -->
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="printReceiptBtn" class="print-btn">طباعة</button>
+                <button type="button" id="newSaleBtn" class="new-sale-btn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال المبيعات اليومية -->
+    <div id="dailySalesModal" class="modal">
+        <div class="modal-content daily-sales-modal">
+            <div class="modal-header">
+                <h3>المبيعات اليومية</h3>
+                <span class="close" id="closeDailySalesModal">&times;</span>
+            </div>
+            <div id="dailySalesContent">
+                <!-- سيتم تحميل محتوى المبيعات اليومية هنا -->
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="js/cashier.js"></script>
+</body>
+</html>

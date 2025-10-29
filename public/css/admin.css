@@ -1,0 +1,909 @@
+/* ألوان الوضع الفاتح (Light Mode) - أزرق */
+:root {
+    --primary-blue: #4A90E2; /* blue */
+    --primary-black: #1a1a1a;
+    --white: #ffffff;
+    --light-blue: #E3F2FD; /* light-blue */
+    --dark-blue: #1565C0; /* dark-blue */
+    --text-dark: #333;
+    --text-light: #666;
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #f39c12;
+    --shadow: rgba(0, 0, 0, 0.1);
+    --gray-light: #f8f9fa;
+    --gray-border: #e9ecef;
+    --bg-color: var(--white);
+    --card-bg: var(--white);
+    --header-bg: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+    --modal-bg: var(--white);
+    --coffee-brown: #4A90E2;
+    --coffee-gold: #64B5F6;
+    --coffee-light: #BBDEFB;
+    --coffee-dark: #1565C0;
+    --coffee-cream: #E3F2FD;
+    --coffee-beige: #E3F2FD;
+    --light-color: var(--light-blue);
+    --secondary-color: var(--text-light);
+    --dark-color: var(--primary-blue);
+}
+
+/* ألوان الوضع المظلم (Dark Mode) */
+[data-theme="dark"] {
+    --primary-blue: #5ba0f2;
+    --primary-black: #f0f0f0;
+    --white: #1a1a1a;
+    --light-blue: #2c2c2c;
+    --dark-blue: #1e3a5f;
+    --text-dark: #e0e0e0;
+    --text-light: #b0b0b0;
+    --success: #4caf50;
+    --danger: #f44336;
+    --warning: #ff9800;
+    --shadow: rgba(0, 0, 0, 0.3);
+    --gray-light: #333;
+    --gray-border: #444;
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --header-bg: linear-gradient(135deg, #1e3a5f, #0f1419);
+    --modal-bg: #2c2c2c;
+    --coffee-brown: #5ba0f2;
+    --coffee-gold: #FFD700;
+    --coffee-light: #2c2c2c;
+    --coffee-dark: #1e3a5f;
+    --coffee-cream: #2c2c2c;
+    --coffee-beige: #2c2c2c;
+    --light-color: var(--light-blue);
+    --secondary-color: var(--text-light);
+    --dark-color: var(--primary-blue);
+}
+
+/* إعادة تعيين وأساسيات */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-color);
+    direction: rtl;
+    color: var(--text-dark);
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* الهيدر */
+.header {
+    background: var(--header-bg);
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 10px var(--shadow);
+    transition: background 0.3s ease;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+}
+
+.app-name {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.header h1 {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logout-btn {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: var(--dark-blue);
+    transform: translateY(-1px);
+}
+
+.theme-toggle-btn {
+    background: var(--light-blue);
+    color: var(--primary-blue);
+    border: 2px solid var(--primary-blue);
+    padding: 0.75rem;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px var(--shadow);
+}
+
+.theme-toggle-btn:hover {
+    background: var(--primary-blue);
+    color: white;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px var(--shadow);
+}
+
+.daily-sales-btn {
+    background: var(--primary-blue);
+    color: white;
+    border: 2px solid var(--primary-blue);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 8px var(--shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.daily-sales-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.daily-sales-btn:hover::before {
+    left: 100%;
+}
+
+.daily-sales-btn:hover {
+    background: var(--dark-blue);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px var(--shadow);
+    border-color: var(--dark-blue);
+}
+
+.daily-sales-btn:active {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
+}
+
+/* التنقل */
+.nav-tabs {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--gray-border);
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 1rem 2rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-light);
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    color: var(--coffee-brown);
+    border-bottom-color: var(--coffee-gold);
+}
+
+.tab-btn:hover {
+    color: var(--coffee-brown);
+    background: var(--coffee-beige);
+}
+
+/* المحتوى الرئيسي */
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    color: var(--coffee-brown);
+    font-size: 1.8rem;
+}
+
+.add-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+    background: #2ecc71;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+/* حاوية المنتجات */
+.products-container {
+    margin-top: 2rem;
+}
+
+.products-accordion {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--coffee-light);
+    overflow: hidden;
+}
+
+.accordion-btn {
+    width: 100%;
+    background: var(--coffee-brown);
+    color: white;
+    border: none;
+    padding: 1.5rem 2rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.accordion-btn:hover {
+    background: var(--coffee-dark);
+}
+
+.accordion-icon {
+    font-size: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.accordion-btn.active .accordion-icon {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.accordion-content.open {
+    max-height: 2000px; /* قيمة كبيرة كافية للمحتوى */
+    background: var(--bg-color);
+}
+
+/* شبكة المنتجات */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 2rem;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid var(--coffee-light);
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+    width: 100%;
+    height: 150px;
+    background: var(--coffee-beige);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+
+.product-info {
+    padding: 1rem;
+}
+
+.product-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--coffee-brown);
+    margin-bottom: 0.5rem;
+}
+
+.product-price {
+    font-size: 1.1rem;
+    color: var(--coffee-gold);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.product-category {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.product-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.edit-btn, .delete-btn {
+    flex: 1;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.edit-btn {
+    background: var(--warning);
+    color: white;
+}
+
+.edit-btn:hover {
+    background: #e67e22;
+}
+
+.delete-btn {
+    background: var(--danger);
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #c0392b;
+}
+
+/* حاوية الموظفين */
+.employees-container {
+    margin-top: 2rem;
+}
+
+.employees-accordion {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--coffee-light);
+    overflow: hidden;
+}
+
+/* قائمة الموظفين */
+.employees-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.employee-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--coffee-light);
+    display: block;
+}
+
+.employee-info h3 {
+    color: var(--coffee-brown);
+    margin-bottom: 0.5rem;
+}
+
+.employee-details {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.employee-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* المودال */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+.modal.small {
+    max-width: 400px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--coffee-light);
+    background: var(--coffee-beige);
+}
+
+.modal-header h3 {
+    color: var(--coffee-brown);
+    margin: 0;
+}
+
+.close {
+    font-size: 2rem;
+    cursor: pointer;
+    color: var(--text-light);
+    transition: color 0.3s ease;
+}
+
+.close:hover {
+    color: var(--danger);
+}
+
+#productForm, #employeeForm {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--coffee-brown);
+    font-weight: 500;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid var(--coffee-light);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--coffee-gold);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    border-top: 1px solid var(--coffee-light);
+    background: var(--coffee-beige);
+}
+
+.cancel-btn {
+    background: var(--text-light);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background: #555;
+}
+
+.save-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.save-btn:hover {
+    background: #2ecc71;
+    transform: translateY(-1px);
+}
+
+/* التحميل */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--coffee-light);
+    border-top: 4px solid var(--coffee-gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* مودال المبيعات اليومية */
+.daily-sales-modal {
+    max-width: 800px;
+    width: 95%;
+}
+
+.sales-container {
+    padding: 1.5rem;
+}
+
+.sales-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: var(--coffee-beige);
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--coffee-light);
+}
+
+.summary-card h3 {
+    color: var(--coffee-brown);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.summary-card .amount {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--coffee-gold);
+}
+
+.actions-section {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.view-date-btn {
+    background: var(--coffee-gold);
+    color: var(--coffee-brown);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.view-date-btn:hover {
+    background: #ffed4e;
+    transform: translateY(-1px);
+}
+
+.date-selector {
+    background: var(--coffee-beige);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--coffee-light);
+}
+
+.date-selector label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--coffee-brown);
+    font-weight: 500;
+}
+
+.date-selector input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--coffee-light);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.load-date-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.load-date-btn:hover {
+    background: #2ecc71;
+}
+
+.invoices-section {
+    margin-top: 2rem;
+}
+
+.invoices-section h3 {
+    color: var(--coffee-brown);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.invoices-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.invoice-item {
+    background: var(--coffee-beige);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--coffee-light);
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.invoice-number {
+    font-weight: 600;
+    color: var(--coffee-brown);
+}
+
+.invoice-time {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.invoice-employee {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.invoice-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.invoice-amount {
+    font-weight: 600;
+    color: var(--coffee-gold);
+}
+
+.invoice-method {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+/* تصميم متجاوب */
+@media (min-width: 1200px) {
+    .main-content {
+        max-width: 1400px;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+
+    .header-content {
+        max-width: 1400px;
+    }
+
+    .app-name {
+        font-size: 2rem;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .header h1 {
+        text-align: center;
+    }
+
+    .user-info {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-tabs {
+        padding: 0 1rem;
+    }
+
+    .tab-btn {
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .employee-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .employee-actions {
+        align-self: stretch;
+        justify-content: stretch;
+    }
+
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+
+    .daily-sales-modal {
+        max-width: 95%;
+    }
+
+    .sales-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .invoice-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .invoice-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .products-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-actions {
+        flex-direction: column;
+    }
+
+    .edit-btn, .delete-btn {
+        width: 100%;
+    }
+}
