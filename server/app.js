@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // إعداد قاعدة البيانات
 const dbPath = path.join(__dirname, '..', 'database.db');
@@ -700,6 +701,7 @@ app.get('/api/sales-by-date', requireAuth, requireAdmin, (req, res) => {
 });
 
 // تشغيل الخادم
-app.listen(PORT, () => {
-    console.log(`الخادم يعمل على المنفذ ${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`الخادم يعمل على ${HOST}:${PORT}`);
+    console.log(`يمكن الوصول للنظام من أي جهاز على الشبكة عبر: http://${HOST}:${PORT}`);
 });
