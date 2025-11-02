@@ -95,14 +95,7 @@ app.post('/api/auth/login', (req, res) => {
                 return res.status(401).json({ error: 'رقم الموظف أو كلمة المرور غير صحيحة' });
             }
 
-            req.session.user = {
-                id: user.id,
-                name: user.name,
-                employee_number: user.employee_number,
-                role: user.role
-            };
-
-            // إنشاء توكن JWT للأجهزة المحمولة
+            // إنشاء توكن JWT
             const token = jwt.sign(
                 {
                     id: user.id,
@@ -110,13 +103,18 @@ app.post('/api/auth/login', (req, res) => {
                     employee_number: user.employee_number,
                     role: user.role
                 },
-                'am-pos-secret-key',
+                JWT_SECRET,
                 { expiresIn: '24h' }
             );
 
             res.json({
                 success: true,
-                user: req.session.user,
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    employee_number: user.employee_number,
+                    role: user.role
+                },
                 token: token,
                 redirect: user.role === 'admin' ? '/admin.html' : '/cashier.html'
             });
@@ -150,16 +148,13 @@ function requireAuth(req, res, next) {
     const token = req.headers['x-access-token'] || req.headers['authorization'];
 
     if (token) {
-        jwt.verify(token, 'am-pos-secret-key', (err, decoded) => {
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
             if (err) {
                 return res.status(401).json({ error: 'توكن غير صحيح' });
             }
             req.user = decoded;
             next();
         });
-    } else if (req.session.user) {
-        // التحقق من الجلسة كبديل
-        next();
     } else {
         return res.status(401).json({ error: 'يجب تسجيل الدخول أولاً' });
     }
@@ -171,7 +166,7 @@ function requireAdmin(req, res, next) {
     const token = req.headers['x-access-token'] || req.headers['authorization'];
 
     if (token) {
-        jwt.verify(token, 'am-pos-secret-key', (err, decoded) => {
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
             if (err) {
                 return res.status(401).json({ error: 'توكن غير صحيح' });
             }
@@ -181,9 +176,6 @@ function requireAdmin(req, res, next) {
             req.user = decoded;
             next();
         });
-    } else if (req.session.user && req.session.user.role === 'admin') {
-        // التحقق من الجلسة كبديل
-        next();
     } else {
         return res.status(403).json({ error: 'غير مصرح لك بالوصول' });
     }
