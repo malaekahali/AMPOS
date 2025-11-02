@@ -76,13 +76,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        try {
-            const userData = JSON.parse(user);
-            userName.textContent = `مرحباً، ${userData.name}`;
-        } catch (error) {
-            console.error('خطأ في تحليل بيانات المستخدم:', error);
+        // التحقق من صحة التوكن عبر API
+        fetch('/api/auth/check', {
+            method: 'GET',
+            headers: {
+                'x-access-token': token,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('توكن غير صحيح');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.user) {
+                userName.textContent = `مرحباً، ${data.user.name}`;
+            } else {
+                throw new Error('بيانات المستخدم غير متوفرة');
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في التحقق من المصادقة:', error);
+            // مسح البيانات المحفوظة وإعادة التوجيه
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
             window.location.href = '/login.html';
-        }
+        });
     }
 
     function logout() {
