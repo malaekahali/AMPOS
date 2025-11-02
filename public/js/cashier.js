@@ -68,22 +68,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function checkAuth() {
-        fetch('/api/auth/check', {
-            headers: getAuthHeaders()
-        })
-        .then(response => {
-            if (!response.ok) {
-                window.location.href = '/login.html';
-                return;
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.user) {
-                userName.textContent = `مرحباً، ${data.user.name}`;
-            }
-        })
-        .catch(() => window.location.href = '/login.html');
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+
+        if (!token || !user) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        try {
+            const userData = JSON.parse(user);
+            userName.textContent = `مرحباً، ${userData.name}`;
+        } catch (error) {
+            console.error('خطأ في تحليل بيانات المستخدم:', error);
+            window.location.href = '/login.html';
+        }
     }
 
     function logout() {
