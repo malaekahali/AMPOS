@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let products = [];
     let cart = [];
 
+    // دالة للحصول على رأس المصادقة
+    function getAuthHeaders() {
+        const token = localStorage.getItem('authToken');
+        return token ? { 'x-access-token': token } : {};
+    }
+
     // التحقق من تسجيل الدخول
     checkAuth();
 
@@ -41,7 +47,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         clearCartBtn.addEventListener('click', clearCart);
         checkoutBtn.addEventListener('click', openPaymentModal);
-        printReceiptBtn.addEventListener('click', () => window.print());
+        printReceiptBtn.addEventListener('click', () => {
+            window.print();
+            setTimeout(() => closeAllModals(), 500); // إغلاق المودال بعد نصف ثانية من الطباعة
+        });
         newSaleBtn.addEventListener('click', closeAllModals);
         document.querySelectorAll('.close').forEach(closeBtn => {
             closeBtn.addEventListener('click', closeAllModals);
@@ -59,20 +68,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function checkAuth() {
-        fetch('/api/auth/check', { credentials: 'same-origin' })
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+
+        if (!token || !user) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        // التحقق من صحة التوكن عبر API
+        fetch('/api/auth/check', {
+            method: 'GET',
+            headers: {
+                'x-access-token': token,
+                'Content-Type': 'application/json'
+            }
+        })
         .then(response => {
             if (!response.ok) {
-                window.location.href = '/login.html';
-                return;
+                throw new Error('توكن غير صحيح');
             }
             return response.json();
         })
         .then(data => {
             if (data && data.user) {
                 userName.textContent = `مرحباً، ${data.user.name}`;
+            } else {
+                throw new Error('بيانات المستخدم غير متوفرة');
             }
         })
-        .catch(() => window.location.href = '/login.html');
+        .catch(error => {
+            console.error('خطأ في التحقق من المصادقة:', error);
+            // مسح البيانات المحفوظة وإعادة التوجيه
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        });
     }
 
     function logout() {
@@ -83,7 +114,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadProducts() {
         loading.style.display = 'flex';
-        fetch('/api/products', { credentials: 'same-origin' })
+        fetch('/api/products', {
+            credentials: 'same-origin',
+            headers: getAuthHeaders()
+        })
         .then(response => response.json())
         .then(data => {
             products = data;
@@ -259,27 +293,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         document.getElementById('cashPaymentBtn').addEventListener('click', () => {
-            const amount = parseFloat(document.getElementById('numpadInput').value) || 0;
-            if (amount <= 0 || amount > remainingAmount) {
+            const inputValue = document.getElementById('numpadInput').value;
+            let amount = parseFloat(inputValue) || 0;
+
+            // إذا لم يتم إدخال أي مبلغ (0.00)، ادفع المبلغ الكامل
+            if (inputValue === '0.00') {
+                amount = remainingAmount;
+            } else if (amount <= 0 || amount > remainingAmount) {
                 alert(amount <= 0 ? 'يرجى إدخال مبلغ صحيح' : 'المبلغ المدخل أكبر من المبلغ المتبقي');
                 return;
             }
+
             cashAmount += amount;
             remainingAmount -= amount;
             document.getElementById('numpadInput').value = '0.00';
             updateDisplays();
+
+            // إذا أصبح المبلغ المتبقي صفراً، أكد الدفع تلقائياً
+            if (remainingAmount === 0) {
+                const method = cashAmount > 0 && cardAmount > 0 ? 'mixed' : 'cash';
+                processPayment(method, cashAmount, cardAmount);
+            }
         });
 
         document.getElementById('cardPaymentBtn').addEventListener('click', () => {
-            const amount = parseFloat(document.getElementById('numpadInput').value) || 0;
-            if (amount <= 0 || amount > remainingAmount) {
+            const inputValue = document.getElementById('numpadInput').value;
+            let amount = parseFloat(inputValue) || 0;
+
+            // إذا لم يتم إدخال أي مبلغ (0.00)، ادفع المبلغ الكامل
+            if (inputValue === '0.00') {
+                amount = remainingAmount;
+            } else if (amount <= 0 || amount > remainingAmount) {
                 alert(amount <= 0 ? 'يرجى إدخال مبلغ صحيح' : 'المبلغ المدخل أكبر من المبلغ المتبقي');
                 return;
             }
+
             cardAmount += amount;
             remainingAmount -= amount;
             document.getElementById('numpadInput').value = '0.00';
             updateDisplays();
+
+            // إذا أصبح المبلغ المتبقي صفراً، أكد الدفع تلقائياً
+            if (remainingAmount === 0) {
+                const method = cashAmount > 0 && cardAmount > 0 ? 'mixed' : 'card';
+                processPayment(method, cashAmount, cardAmount);
+            }
         });
 
         document.getElementById('confirmPaymentBtn').addEventListener('click', () => {
@@ -298,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fetch('/api/process-payment', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             credentials: 'same-origin',
             body: JSON.stringify({ items: cart, payments: payments })
         })

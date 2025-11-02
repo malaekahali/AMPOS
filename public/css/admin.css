@@ -58,6 +58,74 @@
     --dark-color: var(--primary-blue);
 }
 
+/* تخصيص خلفية بطاقات المنتجات في الوضع المظلم */
+[data-theme="dark"] .product-card {
+    background: var(--light-blue);
+}
+
+/* تخصيص خلفية بطاقات الموظفين في الوضع المظلم */
+[data-theme="dark"] .employee-card {
+    background: var(--light-blue);
+}
+
+/* تخصيص مودال المبيعات اليومية في الوضع المظلم */
+[data-theme="dark"] .daily-sales-modal .modal-content {
+    background: var(--modal-bg);
+    border: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .daily-sales-modal .modal-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .daily-sales-modal {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] .summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .summary-card h3 {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .summary-card .amount {
+    color: var(--primary-blue);
+}
+
+[data-theme="dark"] .date-selector {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .date-selector label {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .invoice-item {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .invoice-header,
+[data-theme="dark"] .invoice-details {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .employee-sale-item {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .product-sale-item {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+}
+
 /* إعادة تعيين وأساسيات */
 * {
     margin: 0;
@@ -334,8 +402,8 @@ body {
 /* شبكة المنتجات */
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
     padding: 2rem;
     max-height: 600px;
     overflow-y: auto;
@@ -372,7 +440,7 @@ body {
 }
 
 .product-info {
-    padding: 1rem;
+    padding: 0.5rem;
 }
 
 .product-name {
@@ -443,8 +511,8 @@ body {
 
 /* قائمة الموظفين */
 .employees-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     padding: 2rem;
     max-height: 600px;
@@ -490,11 +558,13 @@ body {
 
 .modal-content {
     background: white;
-    margin: 5% auto;
+    margin: 2% auto 5% auto;
     padding: 0;
     border-radius: 12px;
     width: 90%;
     max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     animation: slideIn 0.3s ease;
 }
@@ -641,6 +711,13 @@ body {
 .daily-sales-modal {
     max-width: 800px;
     width: 95%;
+    max-height: 95vh;
+    overflow-y: auto;
+}
+
+.daily-sales-modal .modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .sales-container {
@@ -677,6 +754,23 @@ body {
 .actions-section {
     margin-bottom: 2rem;
     text-align: center;
+}
+
+.close-day-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+}
+
+.close-day-btn:hover {
+    background: #c82333;
+    transform: translateY(-1px);
 }
 
 .view-date-btn {
@@ -778,10 +872,67 @@ body {
     font-size: 0.9rem;
 }
 
-.invoice-details {
+.invoice-summary {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.invoice-details {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.invoice-details[style*="display: block"] {
+    max-height: 500px;
+}
+
+.invoice-items {
+    margin-top: 0.5rem;
+}
+
+.invoice-item-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.invoice-item-detail:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.item-quantity {
+    flex: 1;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.item-total {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.invoice-toggle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
+}
+
+.invoice-details[style*="display: block"] .invoice-toggle {
+    transform: rotate(180deg);
 }
 
 .invoice-amount {
@@ -794,6 +945,122 @@ body {
     font-size: 0.9rem;
 }
 
+/* مبيعات الموظفين */
+.employee-sales-section {
+    margin-top: 2rem;
+}
+
+.employee-sales-section h3 {
+    color: var(--coffee-brown);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.employee-sales-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.employee-sale-item {
+    background: var(--coffee-beige);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--coffee-light);
+}
+
+.employee-sale-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.employee-name {
+    font-weight: 600;
+    color: var(--coffee-brown);
+}
+
+.employee-invoices {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.employee-sale-details {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.employee-revenue {
+    font-weight: 600;
+    color: var(--coffee-gold);
+}
+
+.employee-cash {
+    color: #1976d2;
+    font-size: 12px;
+}
+
+.employee-card {
+    color: #f57c00;
+    font-size: 12px;
+}
+
+/* مبيعات المنتجات */
+.product-sales-section {
+    margin-top: 2rem;
+}
+
+.product-sales-section h3 {
+    color: var(--coffee-brown);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.product-sales-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.product-sale-item {
+    background: var(--coffee-beige);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--coffee-light);
+}
+
+.product-sale-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.product-name {
+    font-weight: 600;
+    color: var(--coffee-brown);
+}
+
+.product-quantity {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.product-sale-details {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.product-revenue {
+    font-weight: 600;
+    color: var(--coffee-gold);
+}
+
 /* تصميم متجاوب */
 @media (min-width: 1200px) {
     .main-content {
@@ -801,8 +1068,8 @@ body {
     }
 
     .products-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 2rem;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
     }
 
     .header-content {
@@ -818,7 +1085,7 @@ body {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .header-content {
         flex-direction: column;
         gap: 1rem;
@@ -835,11 +1102,14 @@ body {
 
     .nav-tabs {
         padding: 0 1rem;
+        flex-wrap: wrap;
     }
 
     .tab-btn {
         padding: 0.8rem 1rem;
         font-size: 0.9rem;
+        flex: 1;
+        min-width: 120px;
     }
 
     .main-content {
@@ -847,7 +1117,7 @@ body {
     }
 
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 1rem;
     }
 
@@ -869,8 +1139,10 @@ body {
     }
 
     .modal-content {
-        margin: 10% auto;
+        margin: 5% auto;
         width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
     }
 
     .daily-sales-modal {
@@ -878,7 +1150,8 @@ body {
     }
 
     .sales-summary {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
     }
 
     .invoice-header {
@@ -892,18 +1165,438 @@ body {
         align-items: flex-start;
         gap: 0.25rem;
     }
+
+    .product-sales-list, .employee-sales-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        padding: 0.5rem 1rem;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .app-name {
+        font-size: 1.5rem;
+    }
+
+    .nav-tabs {
+        padding: 0 0.5rem;
+    }
+
+    .tab-btn {
+        padding: 0.7rem 0.8rem;
+        font-size: 0.85rem;
+        min-width: 100px;
+    }
+
+    .main-content {
+        padding: 0.5rem;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 0.8rem;
+    }
+
+    .product-card {
+        padding: 0.8rem;
+    }
+
+    .product-name {
+        font-size: 0.9rem;
+    }
+
+    .product-price {
+        font-size: 1rem;
+    }
+
+    .section-header {
+        padding: 0.5rem 0;
+    }
+
+    .section-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .add-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .employee-card {
+        padding: 0.8rem;
+    }
+
+    .employee-name {
+        font-size: 1rem;
+    }
+
+    .employee-info {
+        font-size: 0.85rem;
+    }
+
+    .modal-content {
+        margin: 2% auto;
+        width: 98%;
+        max-height: 95vh;
+    }
+
+    .modal-header h3 {
+        font-size: 1.2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+    }
+
+    .form-group input, .form-group select {
+        padding: 0.7rem;
+        font-size: 0.9rem;
+    }
+
+    .modal-actions {
+        gap: 0.5rem;
+    }
+
+    .modal-actions button {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .daily-sales-modal {
+        max-width: 98%;
+    }
+
+    .sales-summary {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+    }
+
+    .summary-card {
+        padding: 1rem;
+    }
+
+    .summary-card h3 {
+        font-size: 1rem;
+    }
+
+    .amount {
+        font-size: 1.2rem;
+    }
+
+    .actions-section {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .view-date-btn, .restore-day-btn {
+        width: 100%;
+        padding: 0.8rem;
+    }
+
+    .date-selector {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+
+    .date-selector label {
+        font-size: 0.9rem;
+    }
+
+    .date-selector input {
+        padding: 0.7rem;
+    }
+
+    .load-date-btn {
+        padding: 0.7rem;
+        align-self: flex-start;
+    }
+
+    .product-sales-list, .employee-sales-list {
+        gap: 0.5rem;
+    }
+
+    .product-sale-item, .employee-sale-item {
+        padding: 0.8rem;
+    }
+
+    .product-name, .employee-name {
+        font-size: 0.9rem;
+    }
+
+    .product-quantity, .product-revenue, .employee-sales-amount {
+        font-size: 0.85rem;
+    }
+
+    .invoices-list {
+        gap: 0.5rem;
+    }
+
+    .invoice-item {
+        padding: 0.8rem;
+    }
+
+    .invoice-header {
+        font-size: 0.9rem;
+    }
+
+    .invoice-details {
+        font-size: 0.85rem;
+    }
 }
 
 @media (max-width: 480px) {
+    .header-content {
+        padding: 0.5rem;
+    }
+
+    .header h1 {
+        font-size: 1.3rem;
+    }
+
+    .app-name {
+        font-size: 1.3rem;
+    }
+
+    .user-info {
+        gap: 0.3rem;
+    }
+
+    .theme-toggle-btn, .logout-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .nav-tabs {
+        padding: 0 0.3rem;
+        gap: 0.3rem;
+    }
+
+    .tab-btn {
+        padding: 0.6rem 0.6rem;
+        font-size: 0.8rem;
+        min-width: 80px;
+    }
+
+    .main-content {
+        padding: 0.3rem;
+    }
+
     .products-grid {
         grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .product-card {
+        padding: 0.6rem;
+    }
+
+    .product-image {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+
+    .product-name {
+        font-size: 0.85rem;
+    }
+
+    .product-price {
+        font-size: 0.95rem;
     }
 
     .product-actions {
         flex-direction: column;
+        gap: 0.3rem;
     }
 
     .edit-btn, .delete-btn {
         width: 100%;
+        padding: 0.4rem;
+        font-size: 0.8rem;
+    }
+
+    .section-header {
+        padding: 0.3rem 0;
+    }
+
+    .section-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .add-btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .accordion-btn {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .employee-card {
+        padding: 0.6rem;
+    }
+
+    .employee-name {
+        font-size: 0.9rem;
+    }
+
+    .employee-info {
+        font-size: 0.8rem;
+    }
+
+    .employee-actions {
+        gap: 0.3rem;
+    }
+
+    .employee-actions button {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .modal-content {
+        margin: 1% auto;
+        width: 99%;
+        max-height: 98vh;
+        padding: 1rem;
+    }
+
+    .modal-header {
+        margin-bottom: 1rem;
+    }
+
+    .modal-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .close {
+        font-size: 1.5rem;
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 0.8rem;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .form-group input, .form-group select {
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .modal-actions {
+        gap: 0.3rem;
+        margin-top: 1rem;
+    }
+
+    .modal-actions button {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+        flex: 1;
+    }
+
+    .daily-sales-modal {
+        max-width: 99%;
+    }
+
+    .sales-summary {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .summary-card {
+        padding: 0.8rem;
+    }
+
+    .summary-card h3 {
+        font-size: 0.9rem;
+    }
+
+    .amount {
+        font-size: 1.1rem;
+    }
+
+    .actions-section {
+        gap: 0.3rem;
+    }
+
+    .view-date-btn, .restore-day-btn {
+        padding: 0.7rem;
+        font-size: 0.9rem;
+    }
+
+    .date-selector {
+        gap: 0.3rem;
+    }
+
+    .date-selector label {
+        font-size: 0.85rem;
+    }
+
+    .date-selector input {
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .load-date-btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .employee-sales-section h3, .product-sales-section h3, .invoices-section h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .product-sales-list, .employee-sales-list {
+        gap: 0.3rem;
+    }
+
+    .product-sale-item, .employee-sale-item {
+        padding: 0.6rem;
+    }
+
+    .product-name, .employee-name {
+        font-size: 0.85rem;
+    }
+
+    .product-quantity, .product-revenue, .employee-sales-amount {
+        font-size: 0.8rem;
+    }
+
+    .invoices-list {
+        gap: 0.3rem;
+    }
+
+    .invoice-item {
+        padding: 0.6rem;
+    }
+
+    .invoice-number {
+        font-size: 0.9rem;
+    }
+
+    .invoice-time, .invoice-employee {
+        font-size: 0.8rem;
+    }
+
+    .invoice-amount, .invoice-method {
+        font-size: 0.85rem;
     }
 }

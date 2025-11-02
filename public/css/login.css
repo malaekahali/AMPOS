@@ -118,6 +118,74 @@ body::before {
     text-shadow: none;
 }
 
+/* تأثير تساقط الحروف */
+.falling-letters {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.letter-group {
+    position: absolute;
+    top: 150px; /* أسفل أكثر نحو منتصف الصفحة */
+    display: flex;
+    gap: 5px;
+}
+
+.letter-group.left {
+    left: -250px; /* قليلاً لليمين */
+}
+
+.letter-group.right {
+    right: -320px; /* أكثر على اليمين */
+}
+
+.letter {
+    font-size: 7rem;
+    font-weight: 900;
+    background: linear-gradient(45deg, #4A90E2, #87CEEB, #4682B4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(74, 144, 226, 0.5), 0 0 40px rgba(74, 144, 226, 0.3);
+    opacity: 0;
+    animation: fall 3s ease-in-out forwards;
+    font-family: 'Arial Black', Arial, sans-serif;
+    letter-spacing: 5px;
+}
+
+.letter:nth-child(1) { animation-delay: 0s; }
+.letter:nth-child(2) { animation-delay: 0.5s; }
+.letter:nth-child(3) { animation-delay: 1s; }
+.letter:nth-child(4) { animation-delay: 1.5s; }
+.letter:nth-child(5) { animation-delay: 2s; }
+
+@keyframes fall {
+    0% {
+        opacity: 0;
+        transform: translateY(-100px) rotate(0deg) scale(0.5);
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(0) rotate(10deg) scale(1.2);
+    }
+    20% {
+        transform: translateY(0) rotate(-10deg) scale(1);
+    }
+    90% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+}
+
 /* خطوات تسجيل الدخول */
 .login-steps {
     margin-bottom: 2rem;
@@ -351,12 +419,54 @@ body::before {
     }
 }
 
+    margin-left: auto;
+    margin-right: auto;
+    transition: all 0.3s ease;
+}
+
+.number-pad.error {
+    border: 2px solid #ff4444;
+    border-radius: 15px;
+    padding: 10px;
+    background: rgba(255, 68, 68, 0.1);
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+>>>>>>> 207be2bd29779df4a32265ac96f25e075d6a8611
+}
+=======
 /* لوحة الأرقام */
 .number-pad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     max-width: 280px;
+}
+=======
+    margin-left: auto;
+    margin-right: auto;
+    transition: all 0.3s ease;
+}
+
+.number-pad.error {
+    border: 2px solid #ff4444;
+    border-radius: 15px;
+    padding: 10px;
+    background: rgba(255, 68, 68, 0.1);
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+>>>>>>> 207be2bd29779df4a32265ac96f25e075d6a8611
 }
 
 .number-btn {
@@ -545,35 +655,82 @@ body::before {
 }
 
 /* التصميم المتجاوب */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .login-container {
         margin: 20px;
         padding: 30px 20px;
+        max-width: 90vw;
     }
 
     .logo h1 {
-        font-size: 24px;
+        font-size: 2rem;
     }
 
     .number-pad {
         grid-template-columns: repeat(3, 1fr);
         gap: 10px;
+        max-width: 280px;
+    }
+
+    .number-btn {
+        width: 65px;
+        height: 65px;
+        font-size: 1.3rem;
+    }
+
+    .form-group input {
+        padding: 1rem;
+        font-size: 1.1rem;
+    }
+
+    .btn-login {
+        padding: 1rem;
+        font-size: 1rem;
+    }
+
+    .falling-letters {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        margin: 10px;
+        padding: 20px 15px;
+        max-width: 95vw;
+    }
+
+    .logo h1 {
+        font-size: 1.8rem;
+    }
+
+    .number-pad {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
         max-width: 250px;
     }
 
     .number-btn {
-        width: 60px;
-        height: 60px;
-        font-size: 20px;
+        width: 55px;
+        height: 55px;
+        font-size: 1.1rem;
     }
 
     .form-group input {
-        padding: 15px;
-        font-size: 18px;
+        padding: 0.8rem;
+        font-size: 1rem;
     }
 
     .btn-login {
-        padding: 15px;
-        font-size: 16px;
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .form-group h2 {
+        font-size: 1.2rem;
+    }
+
+    .falling-letters {
+        display: none;
     }
 }

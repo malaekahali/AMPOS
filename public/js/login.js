@@ -18,6 +18,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentStep === 1) {
             if (employeeInput.value.length < 10) {
                 employeeInput.value += value;
+                // التحقق من رقم الموظف عند إدخال 4 أرقام أو أكثر
+                if (employeeInput.value.length >= 4) {
+                    checkEmployeeNumber(employeeInput.value);
+                }
             }
         } else {
             if (passwordInput.value.length < 20) {
@@ -109,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function previousStep() {
         currentStep = 1;
         passwordInput.value = '';
+        employeeInput.value = ''; // مسح حقل رقم الموظف عند العودة
         // إضافة تأثير انتقال سحب عكسي
         passwordSection.classList.add('leaving');
         setTimeout(() => {
@@ -150,6 +155,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const employee_number = employeeInput.value;
         const password = passwordInput.value;
 
+        // إزالة أي تنبيه خطأ سابق
+        document.querySelector('.number-pad').classList.remove('error');
+
         try {
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
@@ -166,24 +174,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 successMessage.style.display = 'block';
                 errorMessage.style.display = 'none';
 
+                // حفظ التوكن في localStorage للأجهزة المحمولة
+                if (data.token) {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
+
                 // إعادة توجيه بعد ثانيتين
                 setTimeout(() => {
                     window.location.href = data.redirect;
                 }, 2000);
             } else {
-                errorMessage.textContent = data.error;
-                errorMessage.style.display = 'block';
-                successMessage.style.display = 'none';
+                // إضافة تنبيه أحمر مع اهتزاز للوحة الأرقام
+                document.querySelector('.number-pad').classList.add('error');
 
-                // العودة للخطوة الأولى في حالة خطأ
+                // العودة للخطوة الأولى مباشرة
+                previousStep();
+
+                // إزالة التنبيه الأحمر بعد 3 ثوانٍ
                 setTimeout(() => {
-                    previousStep();
+                    document.querySelector('.number-pad').classList.remove('error');
                 }, 3000);
             }
         } catch (error) {
-            errorMessage.textContent = 'حدث خطأ في الاتصال بالخادم';
-            errorMessage.style.display = 'block';
-            successMessage.style.display = 'none';
+            // إضافة تنبيه أحمر للوحة الأرقام في حالة خطأ الاتصال
+            document.querySelector('.number-pad').classList.add('error');
+        }
+    }
+
+    // دالة التحقق من رقم الموظف
+    async function checkEmployeeNumber(employeeNumber) {
+        try {
+            const response = await fetch('/api/auth/check-employee', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ employee_number: employeeNumber }),
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                // إضافة تنبيه أحمر مع اهتزاز للوحة الأرقام
+                document.querySelector('.number-pad').classList.add('error');
+
+                // العودة للخطوة الأولى مباشرة
+                previousStep();
+
+                // إزالة التنبيه الأحمر بعد 3 ثوانٍ
+                setTimeout(() => {
+                    document.querySelector('.number-pad').classList.remove('error');
+                }, 3000);
+            } else {
+                // إزالة أي تنبيه خطأ سابق إذا كان الرقم صحيح
+                document.querySelector('.number-pad').classList.remove('error');
+            }
+        } catch (error) {
+            console.error('خطأ في التحقق من رقم الموظف:', error);
         }
     }
 

@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentDeleteType = null;
     let currentDeleteId = null;
 
+    // دالة للحصول على رأس المصادقة
+    function getAuthHeaders() {
+        const token = localStorage.getItem('authToken');
+        return token ? { 'x-access-token': token } : {};
+    }
+
     // التحقق من تسجيل الدخول
     checkAuth();
 
@@ -90,22 +96,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function checkAuth() {
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
+
+        if (!token || !user) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        // التحقق من صحة التوكن عبر API
         fetch('/api/auth/check', {
-            credentials: 'same-origin'
+            method: 'GET',
+            headers: {
+                'x-access-token': token,
+                'Content-Type': 'application/json'
+            }
         })
         .then(response => {
             if (!response.ok) {
-                window.location.href = '/login.html';
-                return;
+                throw new Error('توكن غير صحيح');
             }
             return response.json();
         })
         .then(data => {
             if (data && data.user) {
                 userName.textContent = `مرحباً، ${data.user.name}`;
+            } else {
+                throw new Error('بيانات المستخدم غير متوفرة');
             }
         })
-        .catch(() => {
+        .catch(error => {
+            console.error('خطأ في التحقق من المصادقة:', error);
+            // مسح البيانات المحفوظة وإعادة التوجيه
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
             window.location.href = '/login.html';
         });
     }
@@ -135,7 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadProducts() {
         showLoading();
         fetch('/api/products', {
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers: getAuthHeaders()
         })
         .then(response => response.json())
         .then(products => {
@@ -169,9 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
-            <div class="product-image">
-                ${product.image_url ? `<img src="${product.image_url}" alt="${product.name}">` : '<span>📦</span>'}
-            </div>
             <div class="product-info">
                 <div class="product-name">${product.name}</div>
                 <div class="product-price">${product.price} ريال</div>
@@ -262,7 +284,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadEmployees() {
         showLoading();
         fetch('/api/employees', {
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers: getAuthHeaders()
         })
         .then(response => response.json())
         .then(employees => {
@@ -367,9 +390,9 @@ document.addEventListener('DOMContentLoaded', function() {
             role: formData.get('role')
         };
 
-        // إضافة كلمة المرور فقط إذا كانت موجودة
+        // إضافة كلمة المرور فقط إذا كانت موجودة وغير فارغة
         const password = formData.get('password');
-        if (password) {
+        if (password && password.trim() !== '') {
             employeeData.password = password;
         }
 
@@ -482,11 +505,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h3>عدد الفواتير</h3>
                         <div class="amount" id="modalTotalInvoices">جاري التحميل...</div>
                     </div>
+                    <div class="summary-card">
+                        <h3>المبيعات النقدية</h3>
+                        <div class="amount" id="modalCashSales">جاري التحميل...</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>المبيعات بالبطاقة</h3>
+                        <div class="amount" id="modalCardSales">جاري التحميل...</div>
+                    </div>
                 </div>
 
                 <!-- أزرار الإجراءات -->
                 <div class="actions-section">
-                    <button id="modalCloseDayBtn" class="close-day-btn">إنهاء اليوم</button>
                     <button id="modalViewDateBtn" class="view-date-btn">عرض تاريخ محدد</button>
                 </div>
 
@@ -497,11 +527,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button id="modalLoadDateBtn" class="load-date-btn">تحميل</button>
                 </div>
 
+                <!-- مبيعات الموظفين -->
+                <div class="employee-sales-section">
+                    <h3>مبيعات الموظفين</h3>
+                    <div class="employee-sales-list" id="modalEmployeeSalesList">
+                        <!-- سيتم إضافة مبيعات الموظفين هنا -->
+                    </div>
+                </div>
+
+                <!-- مبيعات المنتجات -->
+                <div class="product-sales-section">
+                    <h3>مبيعات المنتجات</h3>
+                    <div class="product-sales-list" id="modalProductSalesList">
+                        <!-- سيتم إضافة مبيعات المنتجات هنا -->
+                    </div>
+                </div>
+
                 <!-- قائمة الفواتير -->
                 <div class="invoices-section">
-                    <h3>تفاصيل الفواتير</h3>
-                    <div class="invoices-list" id="modalInvoicesList">
-                        <p>جاري تحميل الفواتير...</p>
+                    <div class="accordion-btn" id="modalInvoicesAccordionBtn">
+                        <span>تفاصيل الفواتير</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="modalInvoicesAccordionContent">
+                        <div class="invoices-list" id="modalInvoicesList">
+                            <p>جاري تحميل الفواتير...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -519,12 +570,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupModalEventListeners() {
-        // زر إنهاء اليوم
-        const closeDayBtn = document.getElementById('modalCloseDayBtn');
-        if (closeDayBtn) {
-            closeDayBtn.addEventListener('click', () => showModalCloseDayConfirmation());
-        }
-
         // زر عرض تاريخ محدد
         const viewDateBtn = document.getElementById('modalViewDateBtn');
         if (viewDateBtn) {
@@ -541,6 +586,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const closeBtn = document.getElementById('closeDailySalesModal');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => closeAllModals());
+        }
+
+        // إعداد accordion الفواتير في المودال
+        const modalInvoicesAccordionBtn = document.getElementById('modalInvoicesAccordionBtn');
+        const modalInvoicesAccordionContent = document.getElementById('modalInvoicesAccordionContent');
+
+        if (modalInvoicesAccordionBtn && modalInvoicesAccordionContent) {
+            modalInvoicesAccordionBtn.addEventListener('click', function() {
+                const isOpen = modalInvoicesAccordionContent.classList.contains('open');
+                if (isOpen) {
+                    modalInvoicesAccordionContent.classList.remove('open');
+                    this.classList.remove('active');
+                } else {
+                    modalInvoicesAccordionContent.classList.add('open');
+                    this.classList.add('active');
+                }
+            });
         }
     }
 
@@ -563,10 +625,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateModalSalesSummary(data) {
+        console.log('تحديث ملخص المبيعات في المودال:', data);
+
         document.getElementById('modalTotalSales').textContent = data.total_sales.toFixed(2) + ' ريال';
         document.getElementById('modalTaxAmount').textContent = data.tax_amount.toFixed(2) + ' ريال';
         document.getElementById('modalNetSales').textContent = data.net_sales.toFixed(2) + ' ريال';
         document.getElementById('modalTotalInvoices').textContent = data.total_invoices;
+
+        // تحديث المبيعات النقدية والبطاقة إذا كانت العناصر موجودة
+        const cashSalesElement = document.getElementById('modalCashSales');
+        const cardSalesElement = document.getElementById('modalCardSales');
+
+        console.log('عنصر المبيعات النقدية في المودال:', cashSalesElement);
+        console.log('عنصر المبيعات بالبطاقة في المودال:', cardSalesElement);
+        console.log('قيمة cash_sales:', data.cash_sales);
+        console.log('قيمة card_sales:', data.card_sales);
+
+        if (cashSalesElement && data.cash_sales !== undefined) {
+            cashSalesElement.textContent = data.cash_sales.toFixed(2) + ' ريال';
+            console.log('تم تحديث المبيعات النقدية في المودال إلى:', cashSalesElement.textContent);
+        }
+
+        if (cardSalesElement && data.card_sales !== undefined) {
+            cardSalesElement.textContent = data.card_sales.toFixed(2) + ' ريال';
+            console.log('تم تحديث المبيعات بالبطاقة في المودال إلى:', cardSalesElement.textContent);
+        }
     }
 
     function loadModalInvoices() {
@@ -581,6 +664,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 displayModalInvoices(data.invoices);
+                displayModalEmployeeSales(data.employee_sales);
+                displayModalProductSales(data.product_sales);
             })
             .catch(error => {
                 console.error('خطأ في تحميل الفواتير:', error);
@@ -591,7 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const invoicesList = document.getElementById('modalInvoicesList');
 
         if (!invoices || invoices.length === 0) {
-            invoicesList.innerHTML = '<p>لا توجد فواتير لهذا اليوم</p>';
+            invoicesList.innerHTML = '<p>لا توجد مبيعات في هذا اليوم</p>';
             return;
         }
 
@@ -604,12 +689,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="invoice-details">
                     <span class="invoice-amount">${invoice.total_amount.toFixed(2)} ريال</span>
-                    <span class="invoice-method">${invoice.payment_method === 'cash' ? 'نقدي' : 'بطاقة'}</span>
+                    <span class="invoice-method">${invoice.payment_method === 'cash' ? 'نقدي' : invoice.payment_method === 'card' ? 'بطاقة' : 'مختلط'}</span>
                 </div>
             </div>
         `).join('');
 
         invoicesList.innerHTML = invoicesHtml;
+    }
+
+    function displayModalEmployeeSales(employeeSales) {
+        const employeeSalesList = document.getElementById('modalEmployeeSalesList');
+        if (!employeeSalesList) return;
+
+        if (!employeeSales || employeeSales.length === 0) {
+            employeeSalesList.innerHTML = '<p>لا توجد مبيعات موظفين في هذا اليوم</p>';
+            return;
+        }
+
+        const employeeSalesHtml = employeeSales.map(employee => `
+            <div class="employee-sale-item">
+                <div class="employee-sale-header">
+                    <span class="employee-name">${employee.employee_name}</span>
+                    <span class="employee-invoices">${employee.total_invoices} فاتورة</span>
+                </div>
+                <div class="employee-sale-details">
+                    <span class="employee-revenue">${employee.total_sales.toFixed(2)} ريال</span>
+                </div>
+            </div>
+        `).join('');
+
+        employeeSalesList.innerHTML = employeeSalesHtml;
+    }
+
+    function displayModalProductSales(productSales) {
+        const productSalesList = document.getElementById('modalProductSalesList');
+        if (!productSalesList) return;
+
+        if (!productSales || productSales.length === 0) {
+            productSalesList.innerHTML = '<p>لا توجد مبيعات منتجات في هذا اليوم</p>';
+            return;
+        }
+
+        const productSalesHtml = productSales.map(product => `
+            <div class="product-sale-item">
+                <div class="product-sale-header">
+                    <span class="product-name">${product.product_name}</span>
+                    <span class="product-quantity">تم بيع ${product.total_quantity} قطعة</span>
+                </div>
+                <div class="product-sale-details">
+                    <span class="product-revenue">${product.total_revenue.toFixed(2)} ريال</span>
+                </div>
+            </div>
+        `).join('');
+
+        productSalesList.innerHTML = productSalesHtml;
     }
 
     function toggleModalDateSelector() {
@@ -636,6 +769,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 updateModalSalesSummary(data);
                 displayModalInvoices(data.invoices);
+                displayModalEmployeeSales(data.employee_sales);
+                displayModalProductSales(data.product_sales);
             })
             .catch(error => {
                 console.error('خطأ في تحميل المبيعات:', error);
@@ -643,41 +778,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    function showModalCloseDayConfirmation() {
-        const confirmation = confirm(`هل أنت متأكد من إنهاء اليوم؟\nسيتم حفظ جميع المبيعات ولن يمكن تعديلها.\n\nسيتم إعادة تعيين عداد المبيعات لبداية يوم جديد.`);
-        if (confirmation) {
-            closeModalDay();
-        }
-    }
 
-    function closeModalDay() {
-        showLoading();
-
-        fetch('/api/close-day', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert('خطأ: ' + data.error);
-                return;
-            }
-
-            alert('تم إنهاء اليوم بنجاح! سيتم إعادة تعيين عداد المبيعات لبداية يوم جديد.');
-            closeAllModals();
-            // إعادة تحميل البيانات إذا لزم الأمر
-        })
-        .catch(error => {
-            console.error('خطأ في إنهاء اليوم:', error);
-            alert('حدث خطأ في إنهاء اليوم');
-        })
-        .finally(() => {
-            hideLoading();
-        });
-    }
 
     function showLoading() {
         loading.style.display = 'flex';
@@ -753,6 +854,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     this.classList.remove('active');
                 } else {
                     employeesAccordionContent.classList.add('open');
+                    this.classList.add('active');
+                }
+            });
+        }
+
+        // إعداد accordion الفواتير في المودال
+        const modalInvoicesAccordionBtn = document.getElementById('modalInvoicesAccordionBtn');
+        const modalInvoicesAccordionContent = document.getElementById('modalInvoicesAccordionContent');
+
+        if (modalInvoicesAccordionBtn && modalInvoicesAccordionContent) {
+            modalInvoicesAccordionBtn.addEventListener('click', function() {
+                const isOpen = modalInvoicesAccordionContent.classList.contains('open');
+                if (isOpen) {
+                    modalInvoicesAccordionContent.classList.remove('open');
+                    this.classList.remove('active');
+                } else {
+                    modalInvoicesAccordionContent.classList.add('open');
                     this.classList.add('active');
                 }
             });

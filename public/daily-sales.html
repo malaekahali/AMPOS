@@ -6,6 +6,123 @@
     <title>المبيعات اليومية - AM POS</title>
     <link rel="stylesheet" href="css/admin.css">
     <link rel="icon" href="favicon.png" type="image/png">
+    <script>
+        // فحص الجلسة عند تحميل الصفحة
+        window.addEventListener('load', function() {
+            fetch('/api/auth/check', {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    window.location.replace('/login.html');
+                }
+            })
+            .catch(() => {
+                window.location.replace('/login.html');
+            });
+        });
+
+        // منع التنقل عبر أزرار المتصفح
+        window.addEventListener('beforeunload', function(e) {
+            // إزالة الجلسة عند إغلاق الصفحة
+            navigator.sendBeacon('/api/auth/logout');
+        });
+
+        // منع التنقل عبر أزرار الخلف والتالي
+        window.addEventListener('popstate', function(e) {
+            e.preventDefault();
+            window.location.replace('/login.html');
+        });
+
+        // منع النقر بزر الفأرة الأيمن
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // منع اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', function(e) {
+            // منع Ctrl+U (عرض المصدر)
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                return false;
+            }
+            // منع F12 (أدوات المطور)
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+            // منع Ctrl+Shift+I (أدوات المطور)
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                e.preventDefault();
+                return false;
+            }
+            // منع Ctrl+Shift+J (وحدة التحكم)
+            if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+                e.preventDefault();
+                return false;
+            }
+            // منع Ctrl+Shift+C (أدوات المطور)
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                return false;
+            }
+            // منع أزرار الخلف والتالي
+            if (e.key === 'Backspace' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // منع السحب والإفلات
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+        });
+
+        // فحص مستمر للجلسة كل 30 ثانية
+        setInterval(function() {
+            fetch('/api/auth/check', {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    window.location.replace('/login.html');
+                }
+            })
+            .catch(() => {
+                window.location.replace('/login.html');
+            });
+        }, 30000);
+
+        // منع فتح الروابط في نوافذ جديدة
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('a[target="_blank"]')) {
+                e.preventDefault();
+            }
+        });
+
+        // إعادة تعيين التاريخ عند التركيز
+        window.addEventListener('focus', function() {
+            // فحص الجلسة عند العودة للصفحة
+            fetch('/api/auth/check', {
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    window.location.replace('/login.html');
+                }
+            })
+            .catch(() => {
+                window.location.replace('/login.html');
+            });
+        });
+    </script>
 </head>
 <body>
     <header class="header">
@@ -54,7 +171,6 @@
 
             <!-- أزرار الإجراءات -->
             <div class="actions-section">
-                <button id="closeDayBtn" class="close-day-btn">إنهاء اليوم</button>
                 <button id="viewDateBtn" class="view-date-btn">عرض تاريخ محدد</button>
                 <button id="restoreDayBtn" class="restore-day-btn" style="display: none;">عودة يوم</button>
             </div>
@@ -64,6 +180,22 @@
                 <label for="salesDate">اختر التاريخ:</label>
                 <input type="date" id="salesDate" name="salesDate">
                 <button id="loadDateBtn" class="load-date-btn">تحميل</button>
+            </div>
+
+            <!-- مبيعات الموظفين -->
+            <div class="employee-sales-section">
+                <h3>مبيعات الموظفين</h3>
+                <div class="employee-sales-list" id="employeeSalesList">
+                    <!-- سيتم إضافة مبيعات الموظفين هنا -->
+                </div>
+            </div>
+
+            <!-- مبيعات المنتجات -->
+            <div class="product-sales-section">
+                <h3>مبيعات المنتجات</h3>
+                <div class="product-sales-list" id="productSalesList">
+                    <!-- سيتم إضافة مبيعات المنتجات هنا -->
+                </div>
             </div>
 
             <!-- قائمة الفواتير -->
@@ -76,20 +208,7 @@
         </div>
     </main>
 
-    <!-- مودال تأكيد إنهاء اليوم -->
-    <div id="closeDayModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>تأكيد إنهاء اليوم</h3>
-                <span class="close">&times;</span>
-            </div>
-            <p>هل أنت متأكد من إنهاء اليوم؟ سيتم حفظ جميع المبيعات ولن يمكن تعديلها.</p>
-            <div class="modal-actions">
-                <button type="button" class="cancel-btn">إلغاء</button>
-                <button type="button" id="confirmCloseDayBtn" class="confirm-btn">تأكيد</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- مودال عودة يوم -->
     <div id="restoreDayModal" class="modal">
