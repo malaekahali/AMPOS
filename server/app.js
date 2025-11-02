@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,27 +21,84 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 // إعداد الوسيط
-app.use(cors());
+app.use(cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
     secret: 'am-pos-secret-key',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false } // في الإنتاج، يجب أن يكون true مع HTTPS
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // true في الإنتاج مع HTTPS
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 24 ساعة
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    }
 }));
 
 // خدمة الملفات الثابتة
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// التحقق من المصادقة للصفحات المحمية
+function requirePageAuth(req, res, next) {
+    if (!req.session.user) {
+        return res.redirect('/login.html');
+    }
+    next();
+}
 
 // مسار الجذر - إعادة توجيه إلى تسجيل الدخول
 app.get('/', (req, res) => {
     res.redirect('/login.html');
 });
 
+// حماية الصفحات الرئيسية
+app.get('/admin.html', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login.html');
+    }
+    res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
+});
+
+app.get('/cashier.html', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login.html');
+    }
+    res.sendFile(path.join(__dirname, '..', 'public', 'cashier.html'));
+});
+
+app.get('/daily-sales.html', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login.html');
+    }
+    res.sendFile(path.join(__dirname, '..', 'public', 'daily-sales.html'));
+});
+
 // مسار صفحة الدفع - إعادة توجيه إلى الكاشير (الدفع الآن في مودال)
 app.get('/payment.html', requireAuth, (req, res) => {
     res.redirect('/cashier.html');
+});
+
+// مسار التحقق من رقم الموظف
+app.post('/api/auth/check-employee', (req, res) => {
+    const { employee_number } = req.body;
+
+    db.get('SELECT id FROM employees WHERE employee_number = ?', [employee_number], (err, user) => {
+        if (err) {
+            return res.status(500).json({ error: 'خطأ في الخادم' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ error: 'رقم الموظف غير موجود' });
+        }
+
+        res.json({ success: true });
+    });
 });
 
 // مسار المصادقة
@@ -72,9 +130,22 @@ app.post('/api/auth/login', (req, res) => {
                 role: user.role
             };
 
+            // إنشاء توكن JWT للأجهزة المحمولة
+            const token = jwt.sign(
+                {
+                    id: user.id,
+                    name: user.name,
+                    employee_number: user.employee_number,
+                    role: user.role
+                },
+                'am-pos-secret-key',
+                { expiresIn: '24h' }
+            );
+
             res.json({
                 success: true,
                 user: req.session.user,
+                token: token,
                 redirect: user.role === 'admin' ? '/admin.html' : '/cashier.html'
             });
         });
@@ -89,6 +160,8 @@ app.get('/api/auth/check', (req, res) => {
     res.json({ success: true, user: req.session.user });
 });
 
+
+
 // مسار تسجيل الخروج
 app.post('/api/auth/logout', (req, res) => {
     req.session.destroy((err) => {
@@ -101,18 +174,47 @@ app.post('/api/auth/logout', (req, res) => {
 
 // التحقق من المصادقة
 function requireAuth(req, res, next) {
-    if (!req.session.user) {
+    // التحقق من التوكن JWT في الهيدر
+    const token = req.headers['x-access-token'] || req.headers['authorization'];
+
+    if (token) {
+        jwt.verify(token, 'am-pos-secret-key', (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ error: 'توكن غير صحيح' });
+            }
+            req.user = decoded;
+            next();
+        });
+    } else if (req.session.user) {
+        // التحقق من الجلسة كبديل
+        next();
+    } else {
         return res.status(401).json({ error: 'يجب تسجيل الدخول أولاً' });
     }
-    next();
 }
 
 // التحقق من دور المدير
 function requireAdmin(req, res, next) {
-    if (!req.session.user || req.session.user.role !== 'admin') {
+    // التحقق من التوكن JWT في الهيدر
+    const token = req.headers['x-access-token'] || req.headers['authorization'];
+
+    if (token) {
+        jwt.verify(token, 'am-pos-secret-key', (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ error: 'توكن غير صحيح' });
+            }
+            if (decoded.role !== 'admin') {
+                return res.status(403).json({ error: 'غير مصرح لك بالوصول' });
+            }
+            req.user = decoded;
+            next();
+        });
+    } else if (req.session.user && req.session.user.role === 'admin') {
+        // التحقق من الجلسة كبديل
+        next();
+    } else {
         return res.status(403).json({ error: 'غير مصرح لك بالوصول' });
     }
-    next();
 }
 
 // مسارات المنتجات
@@ -324,58 +426,50 @@ app.post('/api/process-payment', requireAuth, (req, res) => {
     // الحصول على التاريخ الحالي بتنسيق YYYY-MM-DD
     const today = new Date().toISOString().split('T')[0];
 
-    // الحصول على الرقم اليومي التالي
-    db.get('SELECT current_number FROM daily_invoice_counters WHERE date = ?', [today], (err, row) => {
+    // الحصول على عدد الفواتير في اليوم الحالي لتحديد الرقم اليومي التالي
+    db.get('SELECT COUNT(*) as count FROM invoices WHERE date(date) = ?', [today], (err, row) => {
         if (err) {
-            return res.status(500).json({ error: 'خطأ في استرجاع عداد الفواتير' });
+            return res.status(500).json({ error: 'خطأ في استرجاع عدد الفواتير' });
         }
 
-        const nextNumber = (row ? row.current_number : 0) + 1;
+        const nextNumber = (row.count || 0) + 1;
 
-        // تحديث العداد اليومي
-        db.run('INSERT OR REPLACE INTO daily_invoice_counters (date, current_number) VALUES (?, ?)',
-            [today, nextNumber], (err) => {
+        // إدراج الفاتورة مع الرقم اليومي
+        const insertData = [req.session.user.id, total_amount, payment_method, cashPayments, cardPayments, JSON.stringify(payments), nextNumber];
+        const insertQuery = 'INSERT INTO invoices (employee_id, total_amount, payment_method, cash_amount, card_amount, payments, daily_number) VALUES (?, ?, ?, ?, ?, ?, ?)';
+
+        db.run(insertQuery, insertData, function(err) {
                 if (err) {
-                    return res.status(500).json({ error: 'خطأ في تحديث عداد الفواتير' });
+                    console.error('خطأ في إنشاء الفاتورة:', err);
+                    console.error('Query:', insertQuery);
+                    console.error('Data:', insertData);
+                    return res.status(500).json({ error: 'خطأ في إنشاء الفاتورة: ' + err.message });
                 }
 
-                // إدراج الفاتورة مع الرقم اليومي
-                const insertData = [req.session.user.id, total_amount, payment_method, cashPayments, cardPayments, JSON.stringify(payments), nextNumber];
-                const insertQuery = 'INSERT INTO invoices (employee_id, total_amount, payment_method, cash_amount, card_amount, payments, daily_number) VALUES (?, ?, ?, ?, ?, ?, ?)';
-
-                db.run(insertQuery, insertData, function(err) {
-                        if (err) {
-                            console.error('خطأ في إنشاء الفاتورة:', err);
-                            console.error('Query:', insertQuery);
-                            console.error('Data:', insertData);
-                            return res.status(500).json({ error: 'خطأ في إنشاء الفاتورة: ' + err.message });
-                        }
-
-                        const invoiceId = this.lastID;
-                        const insertItems = items.map(item =>
-                            new Promise((resolve, reject) => {
-                                db.run('INSERT INTO invoice_items (invoice_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-                                    [invoiceId, item.product_id, item.quantity, item.price], function(err) {
-                                        if (err) reject(err);
-                                        else resolve();
-                                    });
-                            })
-                        );
-
-                        Promise.all(insertItems).then(() => {
-                            res.json({
-                                success: true,
-                                invoice_id: invoiceId,
-                                daily_number: nextNumber,
-                                total_amount,
-                                cash_amount: cashPayments,
-                                card_amount: cardPayments,
-                                payments
+                const invoiceId = this.lastID;
+                const insertItems = items.map(item =>
+                    new Promise((resolve, reject) => {
+                        db.run('INSERT INTO invoice_items (invoice_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
+                            [invoiceId, item.product_id, item.quantity, item.price], function(err) {
+                                if (err) reject(err);
+                                else resolve();
                             });
-                        }).catch(err => {
-                            res.status(500).json({ error: 'خطأ في حفظ تفاصيل الفاتورة' });
-                        });
+                    })
+                );
+
+                Promise.all(insertItems).then(() => {
+                    res.json({
+                        success: true,
+                        invoice_id: invoiceId,
+                        daily_number: nextNumber,
+                        total_amount,
+                        cash_amount: cashPayments,
+                        card_amount: cardPayments,
+                        payments
                     });
+                }).catch(err => {
+                    res.status(500).json({ error: 'خطأ في حفظ تفاصيل الفاتورة' });
+                });
             });
     });
 });
@@ -406,64 +500,79 @@ app.post('/api/invoices', requireAuth, (req, res) => {
     // الحصول على التاريخ الحالي بتنسيق YYYY-MM-DD
     const today = new Date().toISOString().split('T')[0];
 
-    // الحصول على الرقم اليومي التالي
-    db.get('SELECT current_number FROM daily_invoice_counters WHERE date = ?', [today], (err, row) => {
+    // الحصول على عدد الفواتير في اليوم الحالي لتحديد الرقم اليومي التالي
+    db.get('SELECT COUNT(*) as count FROM invoices WHERE date(date) = ?', [today], (err, row) => {
         if (err) {
-            return res.status(500).json({ error: 'خطأ في استرجاع عداد الفواتير' });
+            return res.status(500).json({ error: 'خطأ في استرجاع عدد الفواتير' });
         }
 
-        const nextNumber = (row ? row.current_number : 0) + 1;
+        const nextNumber = (row.count || 0) + 1;
 
-        // تحديث العداد اليومي
-        db.run('INSERT OR REPLACE INTO daily_invoice_counters (date, current_number) VALUES (?, ?)',
-            [today, nextNumber], (err) => {
+        // إدراج الفاتورة مع الرقم اليومي
+        const insertData = [req.session.user.id, total_amount, payment_method, nextNumber];
+        let insertQuery = 'INSERT INTO invoices (employee_id, total_amount, payment_method, daily_number) VALUES (?, ?, ?, ?)';
+
+        if (payment_method === 'mixed') {
+            insertData.splice(3, 0, cash_amount, card_amount);
+            insertQuery = 'INSERT INTO invoices (employee_id, total_amount, payment_method, cash_amount, card_amount, daily_number) VALUES (?, ?, ?, ?, ?, ?)';
+        }
+
+        db.run(insertQuery, insertData, function(err) {
                 if (err) {
-                    return res.status(500).json({ error: 'خطأ في تحديث عداد الفواتير' });
+                    return res.status(500).json({ error: 'خطأ في إنشاء الفاتورة' });
                 }
 
-                // إدراج الفاتورة مع الرقم اليومي
-                const insertData = [req.session.user.id, total_amount, payment_method, nextNumber];
-                let insertQuery = 'INSERT INTO invoices (employee_id, total_amount, payment_method, daily_number) VALUES (?, ?, ?, ?)';
+                const invoiceId = this.lastID;
+                const insertItems = items.map(item =>
+                    new Promise((resolve, reject) => {
+                        db.run('INSERT INTO invoice_items (invoice_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
+                            [invoiceId, item.product_id, item.quantity, item.price], function(err) {
+                                if (err) reject(err);
+                                else resolve();
+                            });
+                    })
+                );
 
-                if (payment_method === 'mixed') {
-                    insertData.splice(3, 0, cash_amount, card_amount);
-                    insertQuery = 'INSERT INTO invoices (employee_id, total_amount, payment_method, cash_amount, card_amount, daily_number) VALUES (?, ?, ?, ?, ?, ?)';
-                }
-
-                db.run(insertQuery, insertData, function(err) {
-                        if (err) {
-                            return res.status(500).json({ error: 'خطأ في إنشاء الفاتورة' });
-                        }
-
-                        const invoiceId = this.lastID;
-                        const insertItems = items.map(item =>
-                            new Promise((resolve, reject) => {
-                                db.run('INSERT INTO invoice_items (invoice_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-                                    [invoiceId, item.product_id, item.quantity, item.price], function(err) {
-                                        if (err) reject(err);
-                                        else resolve();
-                                    });
-                            })
-                        );
-
-                        Promise.all(insertItems).then(() => {
-                            let responseData = { success: true, invoice_id: invoiceId, daily_number: nextNumber, total_amount };
-                            if (payment_method === 'mixed') {
-                                responseData.cash_amount = cash_amount;
-                                responseData.card_amount = card_amount;
-                            }
-                            res.json(responseData);
-                        }).catch(err => {
-                            res.status(500).json({ error: 'خطأ في حفظ تفاصيل الفاتورة' });
-                        });
-                    });
+                Promise.all(insertItems).then(() => {
+                    let responseData = { success: true, invoice_id: invoiceId, daily_number: nextNumber, total_amount };
+                    if (payment_method === 'mixed') {
+                        responseData.cash_amount = cash_amount;
+                        responseData.card_amount = card_amount;
+                    }
+                    res.json(responseData);
+                }).catch(err => {
+                    res.status(500).json({ error: 'خطأ في حفظ تفاصيل الفاتورة' });
+                });
             });
     });
 });
 
 // مسارات المبيعات اليومية
 app.get('/api/daily-sales', requireAuth, (req, res) => {
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    // إذا كان الوقت 12 صباحاً، تصفير المبيعات
+    const resetSales = currentHour === 0;
+
+    const queryDate = now.toISOString().split('T')[0];
+
+    if (resetSales) {
+        // إذا كان الوقت 12 صباحاً، أعد مبيعات صفر
+        res.json({
+            date: queryDate,
+            total_sales: 0,
+            tax_amount: 0,
+            net_sales: 0,
+            total_invoices: 0,
+            cash_sales: 0,
+            card_sales: 0,
+            reset_at_midnight: true,
+            employee_sales: [],
+            product_sales: []
+        });
+        return;
+    }
 
     // الحصول على إجمالي المبيعات اليومية
     db.get(`
@@ -476,7 +585,7 @@ app.get('/api/daily-sales', requireAuth, (req, res) => {
             COALESCE(SUM(CASE WHEN payment_method = 'mixed' THEN card_amount ELSE 0 END), 0) as mixed_card_sales
         FROM invoices
         WHERE date(date) = ?
-    `, [today], (err, salesData) => {
+    `, [queryDate], (err, salesData) => {
         if (err) {
             return res.status(500).json({ error: 'خطأ في استرجاع المبيعات' });
         }
@@ -485,28 +594,66 @@ app.get('/api/daily-sales', requireAuth, (req, res) => {
         const totalInvoices = salesData.total_invoices || 0;
         const taxAmount = totalSales * 0.15; // ضريبة 15%
         const netSales = totalSales - taxAmount;
-        
+
         // حساب إجمالي المبيعات النقدية والبطاقة (بما في ذلك المختلط)
         const totalCashSales = (salesData.cash_sales || 0) + (salesData.mixed_cash_sales || 0);
         const totalCardSales = (salesData.card_sales || 0) + (salesData.mixed_card_sales || 0);
 
-        res.json({
-            date: today,
-            total_sales: totalSales,
-            tax_amount: taxAmount,
-            net_sales: netSales,
-            total_invoices: totalInvoices,
-            cash_sales: totalCashSales,
-            card_sales: totalCardSales
+        // استرجاع مبيعات الموظفين
+        db.all(`
+            SELECT
+                e.name as employee_name,
+                SUM(i.total_amount) as total_sales,
+                COUNT(i.id) as total_invoices
+            FROM invoices i
+            LEFT JOIN employees e ON i.employee_id = e.id
+            WHERE date(i.date) = ?
+            GROUP BY e.id, e.name
+            ORDER BY total_sales DESC
+        `, [queryDate], (err, employeeSales) => {
+            if (err) {
+                return res.status(500).json({ error: 'خطأ في استرجاع مبيعات الموظفين' });
+            }
+            if (err) {
+                return res.status(500).json({ error: 'خطأ في استرجاع مبيعات الموظفين' });
+            }
+
+            // استرجاع مبيعات المنتجات
+            db.all(`
+                SELECT
+                    p.name as product_name,
+                    SUM(ii.quantity) as total_quantity,
+                    SUM(ii.quantity * ii.price) as total_revenue
+                FROM invoice_items ii
+                LEFT JOIN products p ON ii.product_id = p.id
+                LEFT JOIN invoices i ON ii.invoice_id = i.id
+                WHERE date(i.date) = ?
+                GROUP BY p.id, p.name
+                ORDER BY total_revenue DESC
+            `, [queryDate], (err, productSales) => {
+                if (err) {
+                    return res.status(500).json({ error: 'خطأ في استرجاع مبيعات المنتجات' });
+                }
+
+                res.json({
+                    date: queryDate,
+                    total_sales: totalSales,
+                    tax_amount: taxAmount,
+                    net_sales: netSales,
+                    total_invoices: totalInvoices,
+                    cash_sales: totalCashSales,
+                    card_sales: totalCardSales,
+                    reset_at_midnight: false,
+                    employee_sales: employeeSales,
+                    product_sales: productSales
+                });
+            });
         });
     });
 });
 
-// مسار إنهاء اليوم
-app.post('/api/close-day', requireAuth, (req, res) => {
-    if (req.session.user.role !== 'admin') {
-        return res.status(403).json({ error: 'غير مصرح لك بالوصول' });
-    }
+// مسار إنهاء اليوم (للمدير فقط)
+app.post('/api/close-day', requireAuth, requireAdmin, (req, res) => {
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -631,8 +778,30 @@ app.post('/api/restore-day', requireAuth, requireAdmin, (req, res) => {
     });
 });
 
+// مسار استرجاع تفاصيل منتجات الفاتورة
+app.get('/api/invoice-items/:invoiceId', requireAuth, (req, res) => {
+    const { invoiceId } = req.params;
+
+    db.all(`
+        SELECT
+            p.name as product_name,
+            ii.quantity,
+            ii.price
+        FROM invoice_items ii
+        LEFT JOIN products p ON ii.product_id = p.id
+        WHERE ii.invoice_id = ?
+        ORDER BY ii.id
+    `, [invoiceId], (err, items) => {
+        if (err) {
+            return res.status(500).json({ error: 'خطأ في استرجاع تفاصيل الفاتورة' });
+        }
+
+        res.json({ items });
+    });
+});
+
 // مسار استرجاع مبيعات تاريخ محدد
-app.get('/api/sales-by-date', requireAuth, requireAdmin, (req, res) => {
+app.get('/api/sales-by-date', requireAuth, (req, res) => {
     const { date } = req.query;
 
     if (!date) {
@@ -646,6 +815,27 @@ app.get('/api/sales-by-date', requireAuth, requireAdmin, (req, res) => {
     }
 
     const dateStr = selectedDate.toISOString().split('T')[0];
+    const now = new Date();
+    const currentDateStr = now.toISOString().split('T')[0];
+    const currentHour = now.getHours();
+
+    // إذا كان التاريخ المطلوب هو اليوم الحالي والوقت 12 صباحاً، تصفير المبيعات
+    if (dateStr === currentDateStr && currentHour === 0) {
+        res.json({
+            date: dateStr,
+            total_sales: 0,
+            tax_amount: 0,
+            net_sales: 0,
+            total_invoices: 0,
+            cash_sales: 0,
+            card_sales: 0,
+            reset_at_midnight: true,
+            invoices: [],
+            product_sales: [],
+            employee_sales: []
+        });
+        return;
+    }
 
     // الحصول على إجمالي المبيعات للتاريخ المحدد
     db.get(`
@@ -686,15 +876,52 @@ app.get('/api/sales-by-date', requireAuth, requireAdmin, (req, res) => {
                 return res.status(500).json({ error: 'خطأ في استرجاع الفواتير' });
             }
 
-            res.json({
-                date: dateStr,
-                total_sales: totalSales,
-                tax_amount: taxAmount,
-                net_sales: netSales,
-                total_invoices: totalInvoices,
-                cash_sales: totalCashSales,
-                card_sales: totalCardSales,
-                invoices: invoices
+            // استرجاع مبيعات المنتجات
+            db.all(`
+                SELECT
+                    p.name as product_name,
+                    SUM(ii.quantity) as total_quantity,
+                    SUM(ii.quantity * ii.price) as total_revenue
+                FROM invoice_items ii
+                LEFT JOIN products p ON ii.product_id = p.id
+                LEFT JOIN invoices i ON ii.invoice_id = i.id
+                WHERE date(i.date) = ?
+                GROUP BY p.id, p.name
+                ORDER BY total_revenue DESC
+            `, [dateStr], (err, productSales) => {
+                if (err) {
+                    return res.status(500).json({ error: 'خطأ في استرجاع مبيعات المنتجات' });
+                }
+
+                // استرجاع مبيعات الموظفين
+                db.all(`
+                    SELECT
+                        e.name as employee_name,
+                        SUM(i.total_amount) as total_sales,
+                        COUNT(i.id) as total_invoices
+                    FROM invoices i
+                    LEFT JOIN employees e ON i.employee_id = e.id
+                    WHERE date(i.date) = ?
+                    GROUP BY e.id, e.name
+                    ORDER BY total_sales DESC
+                `, [dateStr], (err, employeeSales) => {
+                    if (err) {
+                        return res.status(500).json({ error: 'خطأ في استرجاع مبيعات الموظفين' });
+                    }
+
+                    res.json({
+                        date: dateStr,
+                        total_sales: totalSales,
+                        tax_amount: taxAmount,
+                        net_sales: netSales,
+                        total_invoices: totalInvoices,
+                        cash_sales: totalCashSales,
+                        card_sales: totalCardSales,
+                        invoices: invoices,
+                        product_sales: productSales,
+                        employee_sales: employeeSales
+                    });
+                });
             });
         });
     });

@@ -465,6 +465,25 @@ body {
     font-weight: 600;
 }
 
+.close-day-btn {
+    width: 100%;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-day-btn:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
 .checkout-btn {
     width: 100%;
     background: var(--success);
@@ -505,7 +524,7 @@ body {
 
 .modal-content {
     background: var(--modal-bg);
-    margin: 5% auto;
+    margin: 2% auto 5% auto;
     padding: 0;
     border-radius: 12px;
     width: 90%;
@@ -1096,6 +1115,65 @@ body {
 .daily-sales-modal {
     max-width: 800px;
     width: 95%;
+    max-height: 95vh;
+    overflow-y: auto;
+}
+
+[data-theme="dark"] .daily-sales-modal .modal-content {
+    background: var(--modal-bg);
+    border: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .daily-sales-modal .modal-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .daily-sales-modal {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] .summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .summary-card h3 {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .summary-card .amount {
+    color: var(--coffee-gold);
+}
+
+[data-theme="dark"] .date-selector {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .date-selector label {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .invoice-item {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .invoice-header,
+[data-theme="dark"] .invoice-details {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .employee-sale-item {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
+}
+
+[data-theme="dark"] .product-sale-item {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-border);
 }
 
 .sales-container {
