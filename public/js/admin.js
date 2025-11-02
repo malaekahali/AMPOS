@@ -527,19 +527,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button id="modalLoadDateBtn" class="load-date-btn">تحميل</button>
                 </div>
 
-                <!-- مبيعات الموظفين -->
-                <div class="employee-sales-section">
-                    <h3>مبيعات الموظفين</h3>
-                    <div class="employee-sales-list" id="modalEmployeeSalesList">
-                        <!-- سيتم إضافة مبيعات الموظفين هنا -->
+                <!-- مبيعات المنتجات -->
+                <div class="product-sales-section">
+                    <div class="accordion-btn" id="modalProductSalesAccordionBtn">
+                        <span>مبيعات المنتجات</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="modalProductSalesAccordionContent">
+                        <div class="product-sales-list" id="modalProductSalesList">
+                            <!-- سيتم إضافة مبيعات المنتجات هنا -->
+                        </div>
                     </div>
                 </div>
 
-                <!-- مبيعات المنتجات -->
-                <div class="product-sales-section">
-                    <h3>مبيعات المنتجات</h3>
-                    <div class="product-sales-list" id="modalProductSalesList">
-                        <!-- سيتم إضافة مبيعات المنتجات هنا -->
+                <!-- مبيعات الموظفين -->
+                <div class="employee-sales-section">
+                    <div class="accordion-btn" id="modalEmployeeSalesAccordionBtn">
+                        <span>مبيعات الموظفين</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="modalEmployeeSalesAccordionContent">
+                        <div class="employee-sales-list" id="modalEmployeeSalesList">
+                            <!-- سيتم إضافة مبيعات الموظفين هنا -->
+                        </div>
                     </div>
                 </div>
 
@@ -600,6 +610,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     this.classList.remove('active');
                 } else {
                     modalInvoicesAccordionContent.classList.add('open');
+                    this.classList.add('active');
+                }
+            });
+        }
+
+        // إعداد accordion مبيعات المنتجات في المودال
+        const modalProductSalesAccordionBtn = document.getElementById('modalProductSalesAccordionBtn');
+        const modalProductSalesAccordionContent = document.getElementById('modalProductSalesAccordionContent');
+
+        if (modalProductSalesAccordionBtn && modalProductSalesAccordionContent) {
+            modalProductSalesAccordionBtn.addEventListener('click', function() {
+                const isOpen = modalProductSalesAccordionContent.classList.contains('open');
+                if (isOpen) {
+                    modalProductSalesAccordionContent.classList.remove('open');
+                    this.classList.remove('active');
+                } else {
+                    modalProductSalesAccordionContent.classList.add('open');
+                    this.classList.add('active');
+                }
+            });
+        }
+
+        // إعداد accordion مبيعات الموظفين في المودال
+        const modalEmployeeSalesAccordionBtn = document.getElementById('modalEmployeeSalesAccordionBtn');
+        const modalEmployeeSalesAccordionContent = document.getElementById('modalEmployeeSalesAccordionContent');
+
+        if (modalEmployeeSalesAccordionBtn && modalEmployeeSalesAccordionContent) {
+            modalEmployeeSalesAccordionBtn.addEventListener('click', function() {
+                const isOpen = modalEmployeeSalesAccordionContent.classList.contains('open');
+                if (isOpen) {
+                    modalEmployeeSalesAccordionContent.classList.remove('open');
+                    this.classList.remove('active');
+                } else {
+                    modalEmployeeSalesAccordionContent.classList.add('open');
                     this.classList.add('active');
                 }
             });
