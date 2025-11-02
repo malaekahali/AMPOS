@@ -1,5 +1,4 @@
 const express = require('express');
-const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
@@ -9,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
+const JWT_SECRET = process.env.JWT_SECRET || 'am-pos-jwt-secret-key';
 
 // إعداد قاعدة البيانات
 const dbPath = path.join(__dirname, '..', 'database.db');
@@ -23,59 +23,31 @@ const db = new sqlite3.Database(dbPath, (err) => {
 // إعداد الوسيط
 app.use(cors({
     origin: true,
-    credentials: true,
+    credentials: false,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
+    allowedHeaders: ['Content-Type', 'x-access-token']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session({
-    secret: 'am-pos-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production', // true في الإنتاج مع HTTPS
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 24 ساعة
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    }
-}));
 
 // خدمة الملفات الثابتة
 app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// التحقق من المصادقة للصفحات المحمية
-function requirePageAuth(req, res, next) {
-    if (!req.session.user) {
-        return res.redirect('/login.html');
-    }
-    next();
-}
 
 // مسار الجذر - إعادة توجيه إلى تسجيل الدخول
 app.get('/', (req, res) => {
     res.redirect('/login.html');
 });
 
-// حماية الصفحات الرئيسية
+// حماية الصفحات الرئيسية - إزالة حماية الصفحات للعمل مع JWT فقط
 app.get('/admin.html', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login.html');
-    }
     res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
 });
 
 app.get('/cashier.html', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login.html');
-    }
     res.sendFile(path.join(__dirname, '..', 'public', 'cashier.html'));
 });
 
 app.get('/daily-sales.html', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login.html');
-    }
     res.sendFile(path.join(__dirname, '..', 'public', 'daily-sales.html'));
 });
 
