@@ -38,16 +38,16 @@ app.get('/', (req, res) => {
     res.redirect('/login.html');
 });
 
-// حماية الصفحات الرئيسية - إزالة حماية الصفحات للعمل مع JWT فقط
-app.get('/admin.html', (req, res) => {
+// حماية الصفحات الرئيسية
+app.get('/admin.html', requireAuth, requireAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
 });
 
-app.get('/cashier.html', (req, res) => {
+app.get('/cashier.html', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'cashier.html'));
 });
 
-app.get('/daily-sales.html', (req, res) => {
+app.get('/daily-sales.html', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'daily-sales.html'));
 });
 
@@ -399,7 +399,7 @@ app.post('/api/process-payment', requireAuth, (req, res) => {
         const nextNumber = (row.count || 0) + 1;
 
         // إدراج الفاتورة مع الرقم اليومي
-        const insertData = [req.session.user.id, total_amount, payment_method, cashPayments, cardPayments, JSON.stringify(payments), nextNumber];
+        const insertData = [req.user.id, total_amount, payment_method, cashPayments, cardPayments, JSON.stringify(payments), nextNumber];
         const insertQuery = 'INSERT INTO invoices (employee_id, total_amount, payment_method, cash_amount, card_amount, payments, daily_number) VALUES (?, ?, ?, ?, ?, ?, ?)';
 
         db.run(insertQuery, insertData, function(err) {
@@ -652,7 +652,7 @@ app.post('/api/close-day', requireAuth, requireAdmin, (req, res) => {
             db.run(`
                 INSERT INTO daily_closures (date, total_sales, total_tax, net_sales, total_invoices, closed_by)
                 VALUES (?, ?, ?, ?, ?, ?)
-            `, [today, totalSales, taxAmount, netSales, totalInvoices, req.session.user.id], function(err) {
+            `, [today, totalSales, taxAmount, netSales, totalInvoices, req.user.id], function(err) {
                 if (err) {
                     return res.status(500).json({ error: 'خطأ في إنهاء اليوم' });
                 }
