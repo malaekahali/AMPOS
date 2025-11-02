@@ -97,7 +97,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function checkAuth() {
         fetch('/api/auth/check', {
-            credentials: 'same-origin',
             headers: getAuthHeaders()
         })
         .then(response => {
