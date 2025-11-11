@@ -37,14 +37,139 @@ const HOST = process.env.HOST || '0.0.0.0';
 const JWT_SECRET = process.env.JWT_SECRET || 'am-pos-jwt-secret-key';
 
 // إعداد قاعدة البيانات
-const dbPath = path.join(__dirname, '..', 'database.db');
+const dbPath = process.env.NODE_ENV === 'production'
+    ? ':memory:'
+    : path.join(__dirname, '..', 'database.db');
+
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('خطأ في الاتصال بقاعدة البيانات:', err.message);
     } else {
         console.log('تم الاتصال بقاعدة البيانات.');
+        // تهيئة قاعدة البيانات في الذاكرة للإنتاج
+        if (process.env.NODE_ENV === 'production') {
+            initializeDatabase();
+        }
     }
 });
+
+// دالة تهيئة قاعدة البيانات في الذاكرة
+function initializeDatabase() {
+    // إنشاء الجداول
+    const schema = `
+        CREATE TABLE IF NOT EXISTS employees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            employee_number TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL CHECK (role IN ('admin', 'cashier'))
+        );
+
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            price REAL NOT NULL,
+            image_url TEXT,
+            category TEXT NOT NULL,
+            sort_order INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS invoices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_id INTEGER NOT NULL,
+            total_amount REAL NOT NULL,
+            payment_method TEXT NOT NULL,
+            cash_amount REAL DEFAULT 0,
+            card_amount REAL DEFAULT 0,
+            payments TEXT,
+            daily_number INTEGER NOT NULL,
+            date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (employee_id) REFERENCES employees (id)
+        );
+
+        CREATE TABLE IF NOT EXISTS invoice_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            invoice_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            price REAL NOT NULL,
+            FOREIGN KEY (invoice_id) REFERENCES invoices (id),
+            FOREIGN KEY (product_id) REFERENCES products (id)
+        );
+
+        CREATE TABLE IF NOT EXISTS daily_closures (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date DATE NOT NULL,
+            total_sales REAL NOT NULL,
+            total_tax REAL NOT NULL,
+            net_sales REAL NOT NULL,
+            total_invoices INTEGER NOT NULL,
+            closed_by INTEGER NOT NULL,
+            closed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (closed_by) REFERENCES employees (id)
+        );
+
+        CREATE TABLE IF NOT EXISTS daily_invoice_counters (
+            date DATE PRIMARY KEY,
+            current_number INTEGER DEFAULT 0
+        );
+    `;
+
+    db.exec(schema, (err) => {
+        if (err) {
+            console.error('خطأ في إنشاء الجداول:', err);
+        } else {
+            console.log('تم إنشاء الجداول بنجاح.');
+            // إدراج البيانات الأولية
+            insertInitialData();
+        }
+    });
+}
+
+// دالة إدراج البيانات الأولية
+function insertInitialData() {
+    // إدراج الموظفين الأوليين
+    const employees = [
+        ['مدير النظام', '1001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'], // admin123
+        ['موظف الكاشير', '2001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'cashier'] // cashier123
+    ];
+
+    employees.forEach(emp => {
+        db.run('INSERT OR IGNORE INTO employees (name, employee_number, password, role) VALUES (?, ?, ?, ?)', emp);
+    });
+
+    // إدراج المنتجات الأولية
+    const products = [
+        ['قهوة عربية', 5.00, '', 'مشروبات ساخنة', 1],
+        ['قهوة تركية', 6.00, '', 'مشروبات ساخنة', 2],
+        ['قهوة أمريكية', 4.00, '', 'مشروبات ساخنة', 3],
+        ['شاي أخضر', 3.00, '', 'مشروبات ساخنة', 4],
+        ['شاي أسود', 3.00, '', 'مشروبات ساخنة', 5],
+        ['كابتشينو', 7.00, '', 'مشروبات ساخنة', 6],
+        ['لاتيه', 8.00, '', 'مشروبات ساخنة', 7],
+        ['موكا', 9.00, '', 'مشروبات ساخنة', 8],
+        ['عصير برتقال', 6.00, '', 'مشروبات باردة', 1],
+        ['عصير تفاح', 5.00, '', 'مشروبات باردة', 2],
+        ['عصير مانجو', 7.00, '', 'مشروبات باردة', 3],
+        ['عصير أناناس', 6.00, '', 'مشروبات باردة', 4],
+        ['مشروب غازي كوكاكولا', 4.00, '', 'مشروبات باردة', 5],
+        ['مشروب غازي بيبسي', 4.00, '', 'مشروبات باردة', 6],
+        ['ماء معدني', 2.00, '', 'مشروبات باردة', 7],
+        ['كعكة الشوكولاتة', 12.00, '', 'حلويات', 1],
+        ['كعكة الفانيليا', 10.00, '', 'حلويات', 2],
+        ['كعكة الفراولة', 11.00, '', 'حلويات', 3],
+        ['بسكويت الشوكولاتة', 5.00, '', 'حلويات', 4],
+        ['بسكويت الفانيليا', 4.00, '', 'حلويات', 5],
+        ['كرواسون', 6.00, '', 'حلويات', 6],
+        ['دونات', 3.00, '', 'حلويات', 7]
+    ];
+
+    products.forEach(product => {
+        db.run('INSERT OR IGNORE INTO products (name, price, image_url, category, sort_order) VALUES (?, ?, ?, ?, ?)', product);
+    });
+
+    console.log('تم إدراج البيانات الأولية بنجاح.');
+}
 
 // إعداد الوسيط
 app.use(cors({
