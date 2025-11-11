@@ -524,11 +524,13 @@ body {
 
 .modal-content {
     background: var(--modal-bg);
-    margin: 2% auto 5% auto;
+    margin: 1% auto 1% auto;
     padding: 0;
     border-radius: 12px;
     width: 90%;
     max-width: 500px;
+    max-height: 95vh;
+    overflow-y: auto;
     box-shadow: 0 10px 30px var(--shadow);
     animation: slideIn 0.3s ease;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -1474,7 +1476,7 @@ body {
     }
 
     .modal-content {
-        margin: 10% auto;
+    margin: 1% auto;
         width: 95%;
     }
 }

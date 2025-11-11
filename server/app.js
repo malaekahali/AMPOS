@@ -1,3 +1,29 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -39,11 +65,11 @@ app.get('/', (req, res) => {
 });
 
 // حماية الصفحات الرئيسية
-app.get('/admin.html', requireAuth, requireAdmin, (req, res) => {
+app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
 });
 
-app.get('/cashier.html', requireAuth, (req, res) => {
+app.get('/cashier.html', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'cashier.html'));
 });
 
@@ -123,23 +149,16 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // التحقق من المصادقة
-app.get('/api/auth/check', (req, res) => {
-    if (!req.session.user) {
-        return res.status(401).json({ error: 'يجب تسجيل الدخول أولاً' });
-    }
-    res.json({ success: true, user: req.session.user });
+app.get('/api/auth/check', requireAuth, (req, res) => {
+    res.json({ success: true, user: req.user });
 });
 
 
 
 // مسار تسجيل الخروج
 app.post('/api/auth/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            return res.status(500).json({ error: 'خطأ في تسجيل الخروج' });
-        }
-        res.json({ success: true });
-    });
+    // إزالة التوكن من الجانب العميل
+    res.json({ success: true });
 });
 
 // التحقق من المصادقة
@@ -198,13 +217,24 @@ app.post('/api/products', requireAuth, requireAdmin, (req, res) => {
         return res.status(400).json({ error: 'البيانات غير مكتملة' });
     }
 
-    db.run('INSERT INTO products (name, price, image_url, category) VALUES (?, ?, ?, ?)',
-        [name, price, image_url || '', category], function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'خطأ في إضافة المنتج' });
-            }
-            res.json({ success: true, id: this.lastID });
-        });
+    // التحقق من عدم وجود منتج بنفس الاسم والتصنيف
+    db.get('SELECT id FROM products WHERE name = ? AND category = ?', [name, category], (err, existingProduct) => {
+        if (err) {
+            return res.status(500).json({ error: 'خطأ في التحقق من المنتج الموجود' });
+        }
+
+        if (existingProduct) {
+            return res.status(400).json({ error: 'يوجد منتج بنفس الاسم والتصنيف بالفعل' });
+        }
+
+        db.run('INSERT INTO products (name, price, image_url, category) VALUES (?, ?, ?, ?)',
+            [name, price, image_url || '', category], function(err) {
+                if (err) {
+                    return res.status(500).json({ error: 'خطأ في إضافة المنتج' });
+                }
+                res.json({ success: true, id: this.lastID });
+            });
+    });
 });
 
 app.put('/api/products/:id', requireAuth, requireAdmin, (req, res) => {
@@ -473,7 +503,7 @@ app.post('/api/invoices', requireAuth, (req, res) => {
         const nextNumber = (row.count || 0) + 1;
 
         // إدراج الفاتورة مع الرقم اليومي
-        const insertData = [req.session.user.id, total_amount, payment_method, nextNumber];
+        const insertData = [req.user.id, total_amount, payment_method, nextNumber];
         let insertQuery = 'INSERT INTO invoices (employee_id, total_amount, payment_method, daily_number) VALUES (?, ?, ?, ?)';
 
         if (payment_method === 'mixed') {
@@ -575,9 +605,6 @@ app.get('/api/daily-sales', requireAuth, (req, res) => {
             GROUP BY e.id, e.name
             ORDER BY total_sales DESC
         `, [queryDate], (err, employeeSales) => {
-            if (err) {
-                return res.status(500).json({ error: 'خطأ في استرجاع مبيعات الموظفين' });
-            }
             if (err) {
                 return res.status(500).json({ error: 'خطأ في استرجاع مبيعات الموظفين' });
             }

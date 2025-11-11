@@ -9,16 +9,33 @@
     <script>
         // فحص الجلسة عند تحميل الصفحة
         window.addEventListener('load', function() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.replace('/login.html');
+                return;
+            }
+
             fetch('/api/auth/check', {
-                credentials: 'same-origin'
+                method: 'GET',
+                headers: {
+                    'x-access-token': token
+                }
             })
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
                     window.location.replace('/login.html');
+                } else {
+                    // حفظ بيانات المستخدم
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    document.getElementById('userName').textContent = data.user.name;
                 }
             })
             .catch(() => {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
                 window.location.replace('/login.html');
             });
         });
@@ -85,16 +102,29 @@
 
         // فحص مستمر للجلسة كل 30 ثانية
         setInterval(function() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.replace('/login.html');
+                return;
+            }
+
             fetch('/api/auth/check', {
-                credentials: 'same-origin'
+                method: 'GET',
+                headers: {
+                    'x-access-token': token
+                }
             })
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
                     window.location.replace('/login.html');
                 }
             })
             .catch(() => {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
                 window.location.replace('/login.html');
             });
         }, 30000);
@@ -109,16 +139,29 @@
         // إعادة تعيين التاريخ عند التركيز
         window.addEventListener('focus', function() {
             // فحص الجلسة عند العودة للصفحة
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.replace('/login.html');
+                return;
+            }
+
             fetch('/api/auth/check', {
-                credentials: 'same-origin'
+                method: 'GET',
+                headers: {
+                    'x-access-token': token
+                }
             })
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
                     window.location.replace('/login.html');
                 }
             })
             .catch(() => {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
                 window.location.replace('/login.html');
             });
         });

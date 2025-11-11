@@ -184,6 +184,15 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // تحديث عدد المنتجات في العنوان
+        const productsAccordionBtn = document.getElementById('productsAccordionBtn');
+        if (productsAccordionBtn) {
+            const span = productsAccordionBtn.querySelector('span');
+            if (span) {
+                span.textContent = `المنتجات (${products.length})`;
+            }
+        }
+
         products.forEach(product => {
             const productCard = createProductCard(product);
             productsGrid.appendChild(productCard);
@@ -310,10 +319,25 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // تحديث عدد الموظفين في العنوان
+        const employeesAccordionBtn = document.getElementById('employeesAccordionBtn');
+        if (employeesAccordionBtn) {
+            const span = employeesAccordionBtn.querySelector('span');
+            if (span) {
+                span.textContent = `الموظفين (${employees.length})`;
+            }
+        }
+
+        // عرض الموظفين في ثلاثة أعمدة
+        const employeesGrid = document.createElement('div');
+        employeesGrid.className = 'employees-grid';
+
         employees.forEach(employee => {
             const employeeCard = createEmployeeCard(employee);
-            employeesList.appendChild(employeeCard);
+            employeesGrid.appendChild(employeeCard);
         });
+
+        employeesList.appendChild(employeesGrid);
     }
 
     function createEmployeeCard(employee) {
@@ -651,9 +675,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadModalDailySales() {
-        fetch('/api/daily-sales')
-            .then(response => response.json())
+        fetch('/api/daily-sales', {
+            method: 'GET',
+            headers: getAuthHeaders()
+        })
+            .then(response => {
+                console.log('استجابة API المبيعات اليومية في المدير:', response);
+                return response.json();
+            })
             .then(data => {
+                console.log('بيانات المبيعات اليومية المستلمة في المدير:', data);
                 if (data.error) {
                     alert('خطأ: ' + data.error);
                     return;
@@ -699,9 +730,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadModalInvoices() {
         const today = new Date().toISOString().split('T')[0];
 
-        fetch(`/api/sales-by-date?date=${today}`)
-            .then(response => response.json())
+        fetch(`/api/sales-by-date?date=${today}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        })
+            .then(response => {
+                console.log('استجابة API الفواتير في المدير:', response);
+                return response.json();
+            })
             .then(data => {
+                console.log('بيانات الفواتير المستلمة في المدير:', data);
                 if (data.error) {
                     console.error('خطأ في تحميل الفواتير:', data.error);
                     return;
@@ -713,6 +751,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('خطأ في تحميل الفواتير:', error);
+                alert('حدث خطأ في تحميل بيانات الفواتير');
             });
     }
 
@@ -803,9 +842,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        fetch(`/api/sales-by-date?date=${selectedDate}`)
-            .then(response => response.json())
+        fetch(`/api/sales-by-date?date=${selectedDate}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        })
+            .then(response => {
+                console.log('استجابة API المبيعات بالتاريخ في المدير:', response);
+                return response.json();
+            })
             .then(data => {
+                console.log('بيانات المبيعات بالتاريخ المستلمة في المدير:', data);
                 if (data.error) {
                     alert('خطأ: ' + data.error);
                     return;

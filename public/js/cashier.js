@@ -135,9 +135,9 @@ document.addEventListener('DOMContentLoaded', function() {
             productsGrid.innerHTML = '<p style="text-align: center; color: #666; font-style: italic; grid-column: 1 / -1;">لا توجد منتجات في هذا التصنيف</p>';
             return;
         }
+
         productsGrid.innerHTML = productsToShow.map(product => `
             <div class="product-card" onclick="window.addToCart(${product.id})">
-                <div class="product-image">${product.image_url ? `<img src="${product.image_url}" alt="${product.name}">` : '☕'}</div>
                 <div class="product-name">${product.name}</div>
                 <div class="product-size">${product.size}</div>
                 <div class="product-price">${product.price} ر.س</div>
@@ -451,26 +451,93 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('closeDailySalesModal').addEventListener('click', closeAllModals);
 
-        fetch('/api/daily-sales')
-            .then(response => response.json())
+        fetch('/api/daily-sales', {
+            method: 'GET',
+            headers: getAuthHeaders()
+        })
+            .then(response => {
+                console.log('استجابة API المبيعات اليومية:', response);
+                return response.json();
+            })
             .then(data => {
+                console.log('بيانات المبيعات اليومية المستلمة:', data);
                 if (!data.error) {
                     updateSalesSummary(data);
                     loadTodayInvoices();
+                } else {
+                    console.error('خطأ في البيانات:', data.error);
                 }
             })
-            .catch(error => console.error('خطأ في تحميل المبيعات:', error));
+            .catch(error => {
+                console.error('خطأ في تحميل المبيعات:', error);
+                alert('حدث خطأ في تحميل بيانات المبيعات');
+            });
 
         dailySalesModal.style.display = 'block';
     }
 
     function updateSalesSummary(data) {
-        document.getElementById('modalTotalSales').textContent = data.total_sales.toFixed(2) + ' ريال';
-        document.getElementById('modalTaxAmount').textContent = data.tax_amount.toFixed(2) + ' ريال';
-        document.getElementById('modalNetSales').textContent = data.net_sales.toFixed(2) + ' ريال';
-        document.getElementById('modalTotalInvoices').textContent = data.total_invoices;
-        if (data.cash_sales !== undefined) document.getElementById('modalCashSales').textContent = data.cash_sales.toFixed(2) + ' ريال';
-        if (data.card_sales !== undefined) document.getElementById('modalCardSales').textContent = data.card_sales.toFixed(2) + ' ريال';
+        console.log('تحديث ملخص المبيعات - البيانات المستلمة:', data);
+
+        // التحقق من وجود البيانات
+        if (!data) {
+            console.error('لا توجد بيانات للعرض');
+            return;
+        }
+
+        // تحديث البيانات الأساسية مع فحص أكثر تفصيلاً
+        const elements = {
+            totalSales: document.getElementById('modalTotalSales'),
+            taxAmount: document.getElementById('modalTaxAmount'),
+            netSales: document.getElementById('modalNetSales'),
+            totalInvoices: document.getElementById('modalTotalInvoices'),
+            cashSales: document.getElementById('modalCashSales'),
+            cardSales: document.getElementById('modalCardSales')
+        };
+
+        // فحص وجود العناصر
+        Object.keys(elements).forEach(key => {
+            if (!elements[key]) {
+                console.warn(`العنصر ${key} غير موجود في DOM`);
+            }
+        });
+
+        // تحديث القيم مع التحقق من الوجود
+        if (elements.totalSales) {
+            const value = typeof data.total_sales === 'number' ? data.total_sales : 0;
+            elements.totalSales.textContent = value.toFixed(2) + ' ريال';
+            console.log('تم تحديث المبيعات الإجمالية:', value);
+        }
+
+        if (elements.taxAmount) {
+            const value = typeof data.tax_amount === 'number' ? data.tax_amount : 0;
+            elements.taxAmount.textContent = value.toFixed(2) + ' ريال';
+            console.log('تم تحديث الضريبة:', value);
+        }
+
+        if (elements.netSales) {
+            const value = typeof data.net_sales === 'number' ? data.net_sales : 0;
+            elements.netSales.textContent = value.toFixed(2) + ' ريال';
+            console.log('تم تحديث صافي المبيعات:', value);
+        }
+
+        if (elements.totalInvoices) {
+            const value = typeof data.total_invoices === 'number' ? data.total_invoices : 0;
+            elements.totalInvoices.textContent = value.toString();
+            console.log('تم تحديث عدد الفواتير:', value);
+        }
+
+        if (elements.cashSales && typeof data.cash_sales === 'number') {
+            elements.cashSales.textContent = data.cash_sales.toFixed(2) + ' ريال';
+            console.log('تم تحديث المبيعات النقدية:', data.cash_sales);
+        }
+
+        if (elements.cardSales && typeof data.card_sales === 'number') {
+            elements.cardSales.textContent = data.card_sales.toFixed(2) + ' ريال';
+            console.log('تم تحديث المبيعات بالبطاقة:', data.card_sales);
+        }
+
+        console.log('تم الانتهاء من تحديث ملخص المبيعات');
     }
 
     function loadTodayInvoices() {
@@ -479,15 +546,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadSalesByDate(date) {
-        fetch(`/api/sales-by-date?date=${date}`)
-            .then(response => response.json())
+        fetch(`/api/sales-by-date?date=${date}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        })
+            .then(response => {
+                console.log('استجابة API المبيعات بالتاريخ:', response);
+                return response.json();
+            })
             .then(data => {
+                console.log('بيانات المبيعات بالتاريخ المستلمة:', data);
                 if (!data.error) {
                     updateSalesSummary(data);
                     displayInvoices(data.invoices);
+                } else {
+                    console.error('خطأ في البيانات:', data.error);
                 }
             })
-            .catch(error => console.error('خطأ في تحميل الفواتير:', error));
+            .catch(error => {
+                console.error('خطأ في تحميل الفواتير:', error);
+                alert('حدث خطأ في تحميل بيانات المبيعات');
+            });
     }
 
     function displayInvoices(invoices) {
@@ -526,4 +605,4 @@ document.addEventListener('DOMContentLoaded', function() {
     document.documentElement.setAttribute('data-theme', savedTheme);
     themeToggleBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
     themeToggleBtn.title = savedTheme === 'dark' ? 'تبديل إلى الوضع الفاتح' : 'تبديل إلى الوضع المظلم';
-});
+    });

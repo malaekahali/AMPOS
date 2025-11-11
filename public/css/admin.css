@@ -511,12 +511,15 @@ body {
 
 /* قائمة الموظفين */
 .employees-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
     padding: 2rem;
     max-height: 600px;
     overflow-y: auto;
+}
+
+.employees-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
 }
 
 .employee-card {
@@ -558,7 +561,7 @@ body {
 
 .modal-content {
     background: white;
-    margin: 5% auto 5% auto;
+    margin: 1% auto 5% auto;
     padding: 0;
     border-radius: 12px;
     width: 90%;
@@ -1139,7 +1142,7 @@ body {
     }
 
     .modal-content {
-        margin: 5% auto;
+        margin: 1% auto;
         width: 95%;
         max-height: 90vh;
         overflow-y: auto;
@@ -1241,7 +1244,7 @@ body {
     }
 
     .modal-content {
-        margin: 2% auto;
+        margin: 1% auto;
         width: 98%;
         max-height: 95vh;
     }
